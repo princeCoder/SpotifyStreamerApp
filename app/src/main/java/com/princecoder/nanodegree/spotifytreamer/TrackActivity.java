@@ -14,7 +14,6 @@ public class TrackActivity extends ActionBarActivity {
         setContentView(R.layout.activity_track);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDefaultDisplayHomeAsUpEnabled(true);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()

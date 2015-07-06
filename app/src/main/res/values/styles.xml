@@ -44,13 +44,10 @@
     </style>
 
     <!--Edit text-->
-    <style name="editText">
+    <style name="searchText">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:imeOptions">actionSearch</item>
+        <item name="android:layout_gravity">center</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:inputType">text</item>
-        <item name="android:freezesText">true</item>
-        <item name="android:hint">@string/editText_hint</item>
         <item name="android:layout_marginLeft">@dimen/activity_horizontal_margin</item>
         <item name="android:layout_marginRight">@dimen/activity_horizontal_margin</item>
     </style>

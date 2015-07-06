@@ -29,6 +29,7 @@
     import kaaes.spotify.webapi.android.SpotifyService;
     import kaaes.spotify.webapi.android.models.Track;
     import kaaes.spotify.webapi.android.models.Tracks;
+    import retrofit.RetrofitError;
 
     /**
      * @author prinzlyngotoum
@@ -53,7 +54,6 @@
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            setRetainInstance(true);
         }
 
         @TargetApi(Build.VERSION_CODES.HONEYCOMB)
@@ -117,21 +117,27 @@
 
                 if(isOnline()) {
                     mProgressDialog = new ProgressDialog(getActivity());
-                    mProgressDialog.setTitle("Please wait ...");
+                    mProgressDialog.setTitle(getResources().getString(R.string.progress_dialog_message));
                     mProgressDialog.show();
                 }else{
-                    L.m(TAG," No internet connection");
+                    L.m(TAG,getResources().getString(R.string.no_internet));
                     // I dismiss the progress dialog
                     mProgressDialog.dismiss();
-                    L.toast(getActivity(),"Please check your internet connection");
+                    L.toast(getActivity(),getResources().getString(R.string.no_internet));
                 }
             }
 
             @Override
             protected Tracks doInBackground(String... params) {
                 HashMap<String,Object> queryString = new HashMap<>();
-                queryString.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
-                return  mSpotifyService.getArtistTopTrack(params[0], queryString);
+                try{
+                    queryString.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
+                    return  mSpotifyService.getArtistTopTrack(params[0], queryString);
+                }
+                catch (RetrofitError error){
+                    L.m(TAG,error.getMessage());
+                }
+                return null;
             }
 
 
@@ -140,7 +146,7 @@
                 mTraks.clear();
                 if (tracks == null || tracks.tracks.size() == 0) {
                     mProgressDialog.dismiss();
-                    L.toast(getActivity()," No track found");
+                    L.toast(getActivity(),getResources().getString(R.string.no_track));
                 }
                 else{
                     int count =0;
@@ -157,6 +163,7 @@
                         if(count==10)break;;
                     }
                     // dismiss the progress dialog
+                    if (mProgressDialog!=null)
                     mProgressDialog.dismiss();
 
                     //update the adapter dataset

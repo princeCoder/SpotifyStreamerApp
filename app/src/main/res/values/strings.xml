@@ -13,4 +13,21 @@
 
     <!--default value for textview-->
     <string name="default_content_description">text</string>
+
+    <!--No internet message-->
+    <string name="no_internet">No internet connection</string>
+
+    <!--No internet message-->
+    <string name="no_artist">No artist found</string>
+
+    <!--No internet message-->
+    <string name="connected"> connected to internet</string>
+
+    <!--No internet message-->
+    <string name="no_track">No track found</string>
+
+    <!--Progress Dialog message-->
+    <string name="progress_dialog_message">Please wait ...</string>
+
+    <string name="progress_dialog_title">Working</string>
 </resources>
