@@ -6,10 +6,10 @@
     <string name="action_settings">Settings</string>
 
     <!--Track Title bar -->
-    <string name="title_activity_track">Top Tracks</string>
+    <string name="title_activity_track">Top 10 Tracks</string>
 
     <!--artist edit text hint-->
-    <string name="editText_hint">artist name</string>
+    <string name="editText_hint">Enter artist name</string>
 
     <!--default value for textview-->
     <string name="default_content_description">text</string>

@@ -15,6 +15,7 @@
         <item name="android:layout_alignParentLeft">true</item>
     </style>
 
+    <!--Default card top text-->
     <style name="standard_card_top_text">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -26,10 +27,9 @@
         <item name="android:textColor">@color/black</item>
         <item name="android:layout_alignParentTop">true</item>
         <item name="android:textSize">7pt</item>
-        <item name="android:ellipsize">marquee</item>
-        <item name="android:marqueeRepeatLimit">marquee_forever</item>
     </style>
 
+    <!--Default card sub text-->
     <style name="standard_card_sub_text">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -40,33 +40,22 @@
         <item name="android:gravity">left|center_vertical</item>
         <item name="android:layout_alignParentBottom">true</item>
         <item name="android:textSize">6pt</item>
-        <item name="android:ellipsize">marquee</item>
-
-        <item name="android:marqueeRepeatLimit">marquee_forever</item>
         <item name="android:singleLine">true</item>
     </style>
 
-    android:layout_width="match_parent"
-    android:imeOptions="actionSearch"
-    android:inputType="text"
-    android:hint="@string/editText_hint"
-    android:freezesText="true"
-    android:layout_marginLeft="5dp"
-    android:paddingLeft="10dp"
-    android:layout_height="wrap_content"
-    android:layout_marginRight="5dp"
-
+    <!--Edit text-->
     <style name="editText">
         <item name="android:layout_width">match_parent</item>
         <item name="android:imeOptions">actionSearch</item>
-
         <item name="android:layout_height">wrap_content</item>
         <item name="android:inputType">text</item>
         <item name="android:freezesText">true</item>
+        <item name="android:hint">@string/editText_hint</item>
         <item name="android:layout_marginLeft">@dimen/activity_horizontal_margin</item>
         <item name="android:layout_marginRight">@dimen/activity_horizontal_margin</item>
     </style>
 
+    <!--Stand listview-->
     <style name="standard_listview">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>

@@ -22,6 +22,6 @@ public class L {
      * @param message --> Message to get displayed
      */
     public static void toast(Context c, String message) {
-        Toast.makeText(c, message, Toast.LENGTH_LONG).show();
+        Toast.makeText(c, message, Toast.LENGTH_SHORT).show();
     }
 }
