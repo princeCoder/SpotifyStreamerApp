@@ -30,4 +30,5 @@
     <string name="progress_dialog_message">Please wait ...</string>
 
     <string name="progress_dialog_title">Working</string>
+    <string name="picasso_error">" Picasso Error"</string>
 </resources>

@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.princecoder.nanodegree.spotifytreamer.R;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
+import com.princecoder.nanodegree.spotifytreamer.utils.L;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -70,11 +71,15 @@ public class ArtistAdapter extends ArrayAdapter<IElement> {
             holder.getTopTxt().setText(mElements.get(position).getBaseInfo());
 
         if (mElements.get(position).hasThumb()){
-            Picasso.with(mContext)
-                    .load(mElements.get(position).getThumb())
-                    .resize(200, 200)
-                    .centerCrop()
-                    .into(holder.getImage());
+            try {
+                Picasso.with(mContext)
+                        .load(mElements.get(position).getThumb())
+                        .resize(200, 200)
+                        .centerCrop()
+                        .into(holder.getImage());
+            } catch (Exception e) {
+                L.m(getClass().getSimpleName().toString(), mContext.getString(R.string.picasso_error)+": "+e.getMessage());
+            }
         }
 
         return row;
