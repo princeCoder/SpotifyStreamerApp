@@ -13,6 +13,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.princecoder.nanodegree.spotifytreamer.adapter.TrackAdapter;
@@ -63,6 +64,13 @@ public class TopTrackFragment extends Fragment {
         mTrackListView=(ListView)getView().findViewById(R.id.track_listview);
         mAdapter=new TrackAdapter(getActivity(),R.layout.track_row_item,R.id.topTxt,mTraks);
 
+        mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                NowPlayingFragment fragment=new NowPlayingFragment();
+                getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.trackContainer,fragment,"NowPlayingFragment").commit();
+            }
+        });
 
         // Set the adapter
         mTrackListView.setAdapter(mAdapter);

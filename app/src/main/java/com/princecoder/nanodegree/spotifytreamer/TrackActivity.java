@@ -17,7 +17,7 @@ public class TrackActivity extends ActionBarActivity {
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.trackContainer, new TopTrackFragment())
+                    .add(R.id.trackContainer, new TopTrackFragment(),"TopTrackFragment")
                     .commit();
         }
     }
