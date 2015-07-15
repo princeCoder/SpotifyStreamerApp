@@ -1,12 +1,15 @@
 package com.princecoder.nanodegree.spotifytreamer;
 
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 
-public class HomeActivity extends ActionBarActivity {
+
+public class HomeActivity extends ActionBarActivity implements HomeFragment.OnArtistSelectedListener{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,5 +38,12 @@ public class HomeActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onArtistSelectedListener(ArtistModel artist) {
+        Intent intent = new Intent(this, TrackActivity.class)
+                .putExtra(Intent.EXTRA_TEXT, artist);
+        startActivity(intent);
     }
 }

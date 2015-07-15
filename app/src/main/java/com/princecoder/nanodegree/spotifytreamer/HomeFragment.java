@@ -1,9 +1,9 @@
 package com.princecoder.nanodegree.spotifytreamer;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -50,8 +50,20 @@ public class HomeFragment extends Fragment {
     // EditText for enter artist name
     private android.support.v7.widget.SearchView mSearchText;
 
+    OnArtistSelectedListener mListener;
+
     public HomeFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (OnArtistSelectedListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(TAG + activity.getString(R.string.artist_selected_class_cast_exception_message));
+        }
     }
 
     @Override
@@ -92,10 +104,8 @@ public class HomeFragment extends Fragment {
 
                 ArtistModel artist = (ArtistModel) mAdapter.getItem(position);
 
-                Intent intent = new Intent(getActivity(), TrackActivity.class)
-                        .putExtra(Intent.EXTRA_TEXT, artist);
-                startActivity(intent);
-
+                // The activity has to start the new one
+                mListener.onArtistSelectedListener(artist);
             }
         });
 
@@ -228,6 +238,8 @@ public class HomeFragment extends Fragment {
 
     }
 
-
+    public interface OnArtistSelectedListener{
+        void onArtistSelectedListener(ArtistModel artist);
+    }
 
 }

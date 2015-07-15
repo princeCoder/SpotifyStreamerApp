@@ -1,12 +1,14 @@
 package com.princecoder.nanodegree.spotifytreamer;
 
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class TrackActivity extends ActionBarActivity {
+public class TrackActivity extends ActionBarActivity implements TopTrackFragment.OnTrackSelectedListener{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,5 +44,24 @@ public class TrackActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTrackSelectedListener() {
+        // Instanciate the nowPlaying fragment
+        NowPlayingFragment fragment=new NowPlayingFragment();
+
+        //Fragment manager
+        FragmentManager manager=getSupportFragmentManager();
+
+//                Fragment transaction
+        FragmentTransaction transaction=manager.beginTransaction();
+        transaction.add(R.id.trackContainer, fragment, getResources().getString(R.string.now_playing_fragment_tag));
+
+//                add to backstack
+        transaction.addToBackStack(getResources().getString(R.string.now_playing_fragment_tag));
+        transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+        transaction.commit();
+
     }
 }

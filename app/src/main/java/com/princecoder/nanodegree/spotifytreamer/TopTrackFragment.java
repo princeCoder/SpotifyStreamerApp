@@ -1,6 +1,7 @@
 package com.princecoder.nanodegree.spotifytreamer;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -10,8 +11,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,10 +47,26 @@ public class TopTrackFragment extends Fragment {
     // My adapter
     private TrackAdapter mAdapter;
 
+    //Tag
     private String TAG=getClass().getSimpleName();
+
+    //Listener
+
+    OnTrackSelectedListener mListener;
 
     public TopTrackFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (OnTrackSelectedListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(TAG + activity.getString(R.string.track_selected_class_cast_exception_message));
+        }
+
     }
 
     @Override
@@ -69,20 +84,8 @@ public class TopTrackFragment extends Fragment {
         mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // Instanciate the nowPlaying fragment
-                NowPlayingFragment fragment=new NowPlayingFragment();
 
-                //Fragment manager
-                FragmentManager manager=getActivity().getSupportFragmentManager();
-
-//                Fragment transaction
-                FragmentTransaction transaction=manager.beginTransaction();
-                transaction.add(R.id.trackContainer, fragment, getResources().getString(R.string.now_playing_fragment_tag));
-
-//                add to backstack
-                transaction.addToBackStack(getResources().getString(R.string.now_playing_fragment_tag));
-                transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-                transaction.commit();
+                mListener.onTrackSelectedListener();
             }
         });
 
@@ -194,6 +197,11 @@ public class TopTrackFragment extends Fragment {
                 mAdapter.notifyDataSetChanged();
             }
         }
+    }
+
+    public interface OnTrackSelectedListener{
+
+        void onTrackSelectedListener();
     }
 
 }
