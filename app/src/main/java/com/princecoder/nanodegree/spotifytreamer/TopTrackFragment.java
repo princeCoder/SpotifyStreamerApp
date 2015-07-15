@@ -10,6 +10,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -67,10 +69,24 @@ public class TopTrackFragment extends Fragment {
         mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // Instanciate the nowPlaying fragment
                 NowPlayingFragment fragment=new NowPlayingFragment();
-                getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.trackContainer,fragment,"NowPlayingFragment").commit();
+
+                //Fragment manager
+                FragmentManager manager=getActivity().getSupportFragmentManager();
+
+//                Fragment transaction
+                FragmentTransaction transaction=manager.beginTransaction();
+                transaction.add(R.id.trackContainer, fragment, getResources().getString(R.string.now_playing_fragment_tag));
+
+//                add to backstack
+                transaction.addToBackStack(getResources().getString(R.string.now_playing_fragment_tag));
+                transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+                transaction.commit();
             }
         });
+
+
 
         // Set the adapter
         mTrackListView.setAdapter(mAdapter);
