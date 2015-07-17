@@ -53,6 +53,9 @@ public class TopTrackFragment extends Fragment {
     //Listener
     OnTrackSelectedListener mListener;
 
+    //Associated artist
+    private ArtistModel mArtist=new ArtistModel();
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -73,7 +76,17 @@ public class TopTrackFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mTrackListView=(ListView)getView().findViewById(R.id.track_listview);
+    }
+
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+        View rootView=inflater.inflate(R.layout.fragment_top_track, container, false);
+
+        mTrackListView=(ListView)rootView.findViewById(R.id.track_listview);
         mAdapter=new TrackAdapter(getActivity(),R.layout.track_row_item,R.id.topTxt,mTraks);
 
         mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -84,8 +97,6 @@ public class TopTrackFragment extends Fragment {
             }
         });
 
-
-
         // Set the adapter
         mTrackListView.setAdapter(mAdapter);
 
@@ -95,28 +106,20 @@ public class TopTrackFragment extends Fragment {
             new TopTrackAsyncTask().execute(artist.getSpotifyId());
         }
         else{ // We are in dual pane mode
-            Bundle arg=getArguments();
-            if(arg!=null){
-                ArtistModel artist = (ArtistModel)arg.getSerializable("Artist");
-                new TopTrackAsyncTask().execute(artist.getSpotifyId());
+            Bundle args=getArguments();
+            if(args!=null){
+                mArtist = (ArtistModel)args.getSerializable("Artist");
+                new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
             }
         }
-    }
 
-
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_top_track, container, false);
+        return rootView;
     }
 
 
     /**
-     * Are we online?
-     *
-     * @return
+     *  Check if we are online
      */
     protected boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -126,6 +129,11 @@ public class TopTrackFragment extends Fragment {
         } else {
             return false;
         }
+    }
+
+    // If the user selected a new Artist
+    public void onArtistChange(String spotifyId){
+        new TopTrackAsyncTask().execute(spotifyId);
     }
 
     /**

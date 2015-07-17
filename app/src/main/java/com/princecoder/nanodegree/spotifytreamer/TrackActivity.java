@@ -18,6 +18,8 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         if (savedInstanceState == null) {
+        //We create the Top Track fragment and add it to the activity
+
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.trackContainer, new TopTrackFragment(),getString(R.string.top_track_fragment_tag))
                     .commit();

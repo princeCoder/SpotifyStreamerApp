@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,6 +54,9 @@ public class HomeFragment extends Fragment {
     //Listener
     private OnArtistSelectedListener mListener;
 
+    //Position
+    private int mPosition;
+
     public HomeFragment() {
         // Required empty public constructor
     }
@@ -87,7 +91,7 @@ public class HomeFragment extends Fragment {
         View myView= inflater.inflate(R.layout.fragment_home, container, false);
 
         mListViewArtist = (ListView) myView.findViewById(R.id.artist_listview);
-        mSearchText =(android.support.v7.widget.SearchView)myView.findViewById(R.id.searchText);
+        mSearchText =(SearchView)myView.findViewById(R.id.searchText);
 
         //Initialize the adapter
         mAdapter = new ArtistAdapter(getActivity(), R.layout.artist_row_item, R.id.topTxt, mListOfArtist);
@@ -104,18 +108,23 @@ public class HomeFragment extends Fragment {
             public void onItemClick(AdapterView<?> arg0, View arg1, int position,
                                     long id) {
                 // TODO Auto-generated method stub
-                mListViewArtist.setItemChecked(position, true);
+
+                // Get the selected artist
                 ArtistModel artist = (ArtistModel) mAdapter.getItem(position);
+
+                //Notify the activity to handle the clic event
                 mListener.onArtistSelectedListener(artist);
+
+                mPosition=position;
             }
         });
 
-        mSearchText = (android.support.v7.widget.SearchView) myView.findViewById(R.id.searchText);
+        mSearchText = (SearchView) myView.findViewById(R.id.searchText);
 
         mSearchText.setIconifiedByDefault(false);
         mSearchText.setQueryHint(getResources().getString(R.string.editText_hint));
 
-        mSearchText.setOnQueryTextListener(new android.support.v7.widget.SearchView.OnQueryTextListener() {
+        mSearchText.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
                 String searchKeyword = mSearchText.getQuery().toString();

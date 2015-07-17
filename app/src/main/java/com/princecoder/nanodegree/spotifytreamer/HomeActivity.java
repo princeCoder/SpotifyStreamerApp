@@ -25,7 +25,7 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
             if(savedInstanceState==null){
                 // Add the fragment to the 'fragment_container' FrameLayout
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.trackContainer, new TopTrackFragment()).commit();
+                        .replace(R.id.trackContainer, new TopTrackFragment(),getString(R.string.top_track_fragment_tag)).commit();
             }
         }
         else{
@@ -58,21 +58,17 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
 
     @Override
     public void onArtistSelectedListener(ArtistModel artist) {
-        if(mTwoPane){
-            // Create fragment and give it an argument for the selected article
-            TopTrackFragment newFragment = new TopTrackFragment();
+        if(mTwoPane){  // We display the tracks of the selected artist by adding or replacing the TopTrack fragment using a fragment transaction
+
             Bundle args = new Bundle();
             args.putSerializable("Artist",artist);
-            newFragment.setArguments(args);
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
-            // Replace whatever is in the fragment_container view with this fragment,
-            // and add the transaction to the back stack so the user can navigate back
-            transaction.replace(R.id.trackContainer, newFragment);
-            transaction.addToBackStack(null);
+            // Create fragment and give it an argument for the selected article
+            TopTrackFragment fragment = new TopTrackFragment();
+            fragment.setArguments(args);
 
-            // Commit the transaction
-            transaction.commit();
+            // Replace whatever is in the fragment_container view with this fragment
+            getSupportFragmentManager().beginTransaction().replace(R.id.trackContainer, fragment,getResources().getString(R.string.top_track_fragment_tag)).commit();
         }
         else{
             Intent intent = new Intent(this, TrackActivity.class)
