@@ -60,20 +60,32 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
     public void onArtistSelectedListener(ArtistModel artist) {
         if(mTwoPane){  // We display the tracks of the selected artist by adding or replacing the TopTrack fragment using a fragment transaction
 
-            Bundle args = new Bundle();
-            args.putSerializable("Artist",artist);
+            TopTrackFragment fragment =(TopTrackFragment)getSupportFragmentManager().findFragmentByTag(getResources().getString(R.string.top_track_fragment_tag));
+            if(artist==null){
+                if(fragment!=null){
+                    fragment.getAdapter().clear();
+                    fragment.getAdapter().notifyDataSetChanged();
+                }
+            }
+            else{
+                Bundle args = new Bundle();
+                args.putSerializable("Artist",artist);
 
-            // Create fragment and give it an argument for the selected article
-            TopTrackFragment fragment = new TopTrackFragment();
-            fragment.setArguments(args);
+                // Create fragment and give it an argument for the selected article
+                fragment = new TopTrackFragment();
+                fragment.setArguments(args);
+            }
+
 
             // Replace whatever is in the fragment_container view with this fragment
             getSupportFragmentManager().beginTransaction().replace(R.id.trackContainer, fragment,getResources().getString(R.string.top_track_fragment_tag)).commit();
         }
         else{
-            Intent intent = new Intent(this, TrackActivity.class)
-                    .putExtra(Intent.EXTRA_TEXT, artist);
-            startActivity(intent);
+            if(artist!=null){
+                Intent intent = new Intent(this, TrackActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT, artist);
+                startActivity(intent);
+            }
         }
     }
 

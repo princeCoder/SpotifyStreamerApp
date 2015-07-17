@@ -4,5 +4,6 @@
     <color name="black">#000</color>
     <color name="white">#FFF</color>
     <color name="red">#E25050</color>
-    <color name="Grey">#545454</color>
+    <color name="grey">#cccccc</color>
+    <color name="spotify_light_blue">#ff64c2f4</color>
 </resources>

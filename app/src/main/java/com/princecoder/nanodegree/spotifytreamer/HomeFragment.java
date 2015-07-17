@@ -146,6 +146,7 @@ public class HomeFragment extends Fragment {
                 if(s.isEmpty()){
                     mListOfArtist.clear();
                     mAdapter.notifyDataSetChanged();
+                    mListener.onArtistSelectedListener(null);
                 }
                 return false;
             }
@@ -158,11 +159,19 @@ public class HomeFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        if (savedInstanceState!=null){
+            int position=savedInstanceState.getInt("Selected_Key");
+            mPosition=position;
+            mListViewArtist.setSelection(mPosition);
+        }
     }
 
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
+        if(mPosition!=ListView.INVALID_POSITION){
+            outState.putInt("Selected_Key",mPosition);
+        }
         super.onSaveInstanceState(outState);
     }
 

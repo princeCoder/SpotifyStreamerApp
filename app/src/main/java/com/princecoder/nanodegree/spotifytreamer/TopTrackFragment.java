@@ -117,6 +117,10 @@ public class TopTrackFragment extends Fragment {
         return rootView;
     }
 
+    public TrackAdapter getAdapter(){
+        return mAdapter;
+    }
+
 
     /**
      *  Check if we are online
