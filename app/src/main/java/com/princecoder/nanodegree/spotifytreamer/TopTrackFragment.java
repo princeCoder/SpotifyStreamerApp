@@ -51,12 +51,7 @@ public class TopTrackFragment extends Fragment {
     private String TAG=getClass().getSimpleName();
 
     //Listener
-
     OnTrackSelectedListener mListener;
-
-    public TopTrackFragment() {
-        // Required empty public constructor
-    }
 
     @Override
     public void onAttach(Activity activity) {
@@ -94,13 +89,18 @@ public class TopTrackFragment extends Fragment {
         // Set the adapter
         mTrackListView.setAdapter(mAdapter);
 
-        Intent intent = getActivity().getIntent();
-
-        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) {
+        Intent intent=getActivity().getIntent();
+        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
             ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
             new TopTrackAsyncTask().execute(artist.getSpotifyId());
         }
-
+        else{ // We are in dual pane mode
+            Bundle arg=getArguments();
+            if(arg!=null){
+                ArtistModel artist = (ArtistModel)arg.getSerializable("Artist");
+                new TopTrackAsyncTask().execute(artist.getSpotifyId());
+            }
+        }
     }
 
 

@@ -50,7 +50,8 @@ public class HomeFragment extends Fragment {
     // EditText for enter artist name
     private android.support.v7.widget.SearchView mSearchText;
 
-    OnArtistSelectedListener mListener;
+    //Listener
+    private OnArtistSelectedListener mListener;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -77,7 +78,6 @@ public class HomeFragment extends Fragment {
                              Bundle savedInstanceState) {
         View myView = updateUI(inflater, container);
 
-
         return myView;
     }
 
@@ -95,16 +95,17 @@ public class HomeFragment extends Fragment {
 
         // Set the adapter
         mListViewArtist.setAdapter(mAdapter);
+
+        mListViewArtist.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
         mListViewArtist.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int position,
                                     long id) {
                 // TODO Auto-generated method stub
-
+                mListViewArtist.setItemChecked(position, true);
                 ArtistModel artist = (ArtistModel) mAdapter.getItem(position);
-
-                // The activity has to start the new one
                 mListener.onArtistSelectedListener(artist);
             }
         });
@@ -119,6 +120,7 @@ public class HomeFragment extends Fragment {
             public boolean onQueryTextSubmit(String s) {
                 String searchKeyword = mSearchText.getQuery().toString();
                 if (!searchKeyword.isEmpty()) {
+
                     // Search for artist
                     if (isOnline()) {
                         mSearchText.clearFocus();
@@ -132,6 +134,10 @@ public class HomeFragment extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String s) {
+                if(s.isEmpty()){
+                    mListOfArtist.clear();
+                    mAdapter.notifyDataSetChanged();
+                }
                 return false;
             }
         });
@@ -145,6 +151,11 @@ public class HomeFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
     }
 
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
 
 
     @Override

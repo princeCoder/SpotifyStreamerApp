@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="horizontal"
+              android:background="@color/white"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <!--Static fragment for artist-->
+    <fragment
+        android:id="@+id/fragment_home"
+        android:name="com.princecoder.nanodegree.spotifytreamer.HomeFragment"
+        android:layout_width="0dp"
+        android:layout_weight="1.5"
+
+        android:layout_height="match_parent" />
+
+    <!--Here I will dynamically display fragments-->
+    <FrameLayout
+        android:id="@+id/trackContainer"
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:layout_height="match_parent"/>
+
+</LinearLayout>

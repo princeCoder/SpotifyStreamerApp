@@ -37,4 +37,5 @@
     <string name="now_playing_fragment_tag">NowPlayingFragment</string>
     <string name="artist_selected_class_cast_exception_message">" must implement OnArtistSelectedListener"</string>
     <string name="track_selected_class_cast_exception_message">" must implement OnTrackSelectedListener"</string>
+    <string name="top_track_fragment_tag">TopTrackFragment</string>
 </resources>

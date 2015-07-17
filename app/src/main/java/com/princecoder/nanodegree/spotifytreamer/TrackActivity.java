@@ -3,12 +3,12 @@ package com.princecoder.nanodegree.spotifytreamer;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class TrackActivity extends ActionBarActivity implements TopTrackFragment.OnTrackSelectedListener{
+public class TrackActivity extends AppCompatActivity implements TopTrackFragment.OnTrackSelectedListener{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,7 +19,7 @@ public class TrackActivity extends ActionBarActivity implements TopTrackFragment
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.trackContainer, new TopTrackFragment(),"TopTrackFragment")
+                    .add(R.id.trackContainer, new TopTrackFragment(),getString(R.string.top_track_fragment_tag))
                     .commit();
         }
     }
