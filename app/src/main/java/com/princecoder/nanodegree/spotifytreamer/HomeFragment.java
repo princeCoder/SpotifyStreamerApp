@@ -34,6 +34,9 @@ import retrofit.RetrofitError;
 
 // TODO Do something
 
+/**
+ *
+ */
 public class HomeFragment extends Fragment {
 
     // ListView to display artists
@@ -80,9 +83,7 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View myView = updateUI(inflater, container);
-
-        return myView;
+        return updateUI(inflater, container);
     }
 
     @NonNull
@@ -160,9 +161,8 @@ public class HomeFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         if (savedInstanceState!=null){
-            int position=savedInstanceState.getInt("Selected_Key");
-            mPosition=position;
-            mListViewArtist.setSelection(mPosition);
+            mPosition=savedInstanceState.getInt("Selected_Key");
+            mListViewArtist.setItemChecked(mPosition,true);
         }
     }
 
@@ -186,16 +186,13 @@ public class HomeFragment extends Fragment {
     /**
      * Are we online?
      *
-     * @return
+     * @return boolean
+     *
      */
     protected boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
-            return true;
-        } else {
-            return false;
-        }
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     /**
@@ -239,7 +236,7 @@ public class HomeFragment extends Fragment {
         @Override
         protected void onPostExecute(List<Artist> artists) {
             //I clear the list of artists
-            mListOfArtist.clear();
+            mAdapter.clear();
             if(artists!=null && artists.size() > 0) {
                 for (Artist ar : artists) {
                     ArtistModel artist = new ArtistModel();
@@ -248,7 +245,7 @@ public class HomeFragment extends Fragment {
                     if(ar.images.size()>0){
                         artist.setArtThumb(ar.images.get(0).url);
                     }
-                    mListOfArtist.add(artist);
+                    mAdapter.add(artist);
                 }
                 if (mProgressDialog!=null)
                     mProgressDialog.dismiss();
@@ -261,8 +258,6 @@ public class HomeFragment extends Fragment {
                 // I notify the user no data has been found
                 L.toast(getActivity(),getResources().getString(R.string.no_artist));
             }
-            //Update the adapter
-            mAdapter.notifyDataSetChanged();
         }
 
     }

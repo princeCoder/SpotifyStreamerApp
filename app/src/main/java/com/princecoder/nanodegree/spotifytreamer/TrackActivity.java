@@ -15,6 +15,7 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_track);
 
+        // Enable the up navigation
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         if (savedInstanceState == null) {
@@ -47,6 +48,7 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
 
         return super.onOptionsItemSelected(item);
     }
+
 
     @Override
     public void onTrackSelectedListener() {
