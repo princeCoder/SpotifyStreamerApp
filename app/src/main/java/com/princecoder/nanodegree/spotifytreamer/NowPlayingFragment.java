@@ -1,35 +1,406 @@
 package com.princecoder.nanodegree.spotifytreamer;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.os.Handler;
+import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.princecoder.nanodegree.spotifytreamer.model.TrackModel;
+import com.princecoder.nanodegree.spotifytreamer.utils.Utilities;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Random;
 
 
-public class NowPlayingFragment extends Fragment {
+public class NowPlayingFragment extends DialogFragment implements MediaPlayer.OnCompletionListener, SeekBar.OnSeekBarChangeListener {
 
-    
-    public NowPlayingFragment() {
-        // Required empty public constructor
-    }
-    
+    private ImageButton btnPlay;
+    private ImageButton btnForward;
+    private ImageButton btnBackward;
+    private ImageButton btnNext;
+    private ImageButton btnPrevious;
+    private ImageButton btnRepeat;
+    private ImageButton btnShuffle;
+
+    private ImageView songThumb;
+    private SeekBar songProgressBar;
+    private TextView songAlbumLabel;
+    private TextView songArtistLabel;
+    private TextView songTitleLabel;
+    private TextView songCurrentDurationLabel;
+    private TextView songTotalDurationLabel;
+    // Media Player
+    private MediaPlayer mp;
+    // Handler to update UI timer, progress bar etc,.
+    private Handler mHandler = new Handler();;
+    //        private SongsManager songManager;
+    private Utilities utils;
+    private int seekForwardTime = 5000; // 5000 milliseconds
+    private int seekBackwardTime = 5000; // 5000 milliseconds
+    private int currentSongIndex;
+    private boolean isShuffle = false;
+    private boolean isRepeat = false;
+
+
+    //My Tracks
+    private TrackModel mTrack=new TrackModel();
+
+    //List of tracks
+    private ArrayList<TrackModel>mListTracks=new ArrayList<>();
+
+
+
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
     }
-    
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_now_playing, container, false);
+        View rootView= inflater.inflate(R.layout.fragment_now_playing, null);
+
+        // All player buttons
+        btnPlay = (ImageButton) rootView.findViewById(R.id.btnPlay);
+        btnForward = (ImageButton) rootView.findViewById(R.id.btnForward);
+        btnBackward = (ImageButton) rootView.findViewById(R.id.btnBackward);
+        btnNext = (ImageButton) rootView.findViewById(R.id.btnNext);
+        btnPrevious = (ImageButton)rootView.findViewById(R.id.btnPrevious);
+        btnRepeat = (ImageButton) rootView.findViewById(R.id.btnRepeat);
+        btnShuffle = (ImageButton) rootView.findViewById(R.id.btnShuffle);
+        songProgressBar = (SeekBar) rootView.findViewById(R.id.songProgressBar);
+        songTitleLabel = (TextView) rootView.findViewById(R.id.songTitle);
+        songAlbumLabel = (TextView) rootView.findViewById(R.id.songAlbum);
+        songArtistLabel = (TextView) rootView.findViewById(R.id.songArtist);
+        songCurrentDurationLabel = (TextView) rootView.findViewById(R.id.songCurrentDurationLabel);
+        songTotalDurationLabel = (TextView) rootView.findViewById(R.id.songTotalDurationLabel);
+        songThumb=(ImageView)rootView.findViewById(R.id.trackThumbnail);
+
+        mp = new MediaPlayer();
+        //        songManager = new SongsManager();
+        utils = new Utilities();
+
+        // Listeners
+        songProgressBar.setOnSeekBarChangeListener(this); // Important
+        mp.setOnCompletionListener(this); // Important
+
+        //Receive data from last fragment
+        Bundle args=getArguments();
+
+        if(args!=null){
+            // I retreive the informations
+            mListTracks=(ArrayList<TrackModel>)args.getSerializable(getResources().getString(R.string.Liste_of_tracks));
+            currentSongIndex=args.getInt("position");
+            mTrack = mListTracks.get(currentSongIndex);
+        }
+
+        playSong(currentSongIndex);
+
+
+        /**
+         * Forward button click event
+         * Forwards song specified seconds
+         * */
+        btnForward.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                // get current song position
+                int currentPosition = mp.getCurrentPosition();
+                // check if seekForward time is lesser than song duration
+                if (currentPosition + seekForwardTime <= mp.getDuration()) {
+                    // forward song
+                    mp.seekTo(currentPosition + seekForwardTime);
+                } else {
+                    // forward to end position
+                    mp.seekTo(mp.getDuration());
+                }
+            }
+        });
+
+
+
+        /**
+         * Backward button click event
+         * Backward song to specified seconds
+         * */
+        btnBackward.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                // get current song position
+                int currentPosition = mp.getCurrentPosition();
+                // check if seekBackward time is greater than 0 sec
+                if(currentPosition - seekBackwardTime >= 0){
+                    // forward song
+                    mp.seekTo(currentPosition - seekBackwardTime);
+                }else{
+                    // backward to starting position
+                    mp.seekTo(0);
+                }
+
+            }
+        });
+
+
+        /**
+         * Next button click event
+         * Plays next song by taking currentSongIndex + 1
+         * */
+        btnNext.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                // check if next song is there or not
+                if(currentSongIndex < (mListTracks.size() - 1)){
+                    currentSongIndex = currentSongIndex + 1;
+                    playSong(currentSongIndex);
+                }else{
+                    // play first song
+                    playSong(0);
+                    currentSongIndex = 0;
+                }
+
+            }
+        });
+
+        /**
+         * Back button click event
+         * Plays previous song by currentSongIndex - 1
+         * */
+        btnPrevious.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                if(currentSongIndex > 0){
+                    currentSongIndex = currentSongIndex - 1;
+                    playSong(currentSongIndex);
+
+                }else{
+                    currentSongIndex = mListTracks.size() - 1;
+                    // play last song
+                    playSong(currentSongIndex);
+                }
+
+            }
+        });
+
+        /**
+         * Button Click event for Shuffle button
+         * Enables shuffle flag to true
+         * */
+        btnShuffle.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                if(isShuffle){
+                    isShuffle = false;
+                    Toast.makeText(getActivity(), "Shuffle is OFF", Toast.LENGTH_SHORT).show();
+                    btnShuffle.setImageResource(R.drawable.btn_shuffle);
+                }else{
+                    // make repeat to true
+                    isShuffle= true;
+                    Toast.makeText(getActivity(), "Shuffle is ON", Toast.LENGTH_SHORT).show();
+                    // make shuffle to false
+                    isRepeat = false;
+                    btnShuffle.setImageResource(R.drawable.btn_shuffle_focused);
+                    btnRepeat.setImageResource(R.drawable.btn_repeat);
+                }
+            }
+        });
+
+
+        return rootView;
+
     }
 
-    
+
+
+    /**
+     * Function to play a song
+     * @param songIndex - index of song
+     * */
+    public void  playSong(int songIndex){
+        // Play song
+        try {
+            mp.reset();
+            mp.setDataSource(mListTracks.get(songIndex).getPrevUrl());
+            mp.prepare();
+            mp.start();
+            // Displaying Song title
+            String songTitle = mListTracks.get(songIndex).getTrackName();
+            String songAlbum=mListTracks.get(songIndex).getAlbum();
+            String songArtist=mListTracks.get(songIndex).getArtist();
+            songTitleLabel.setText(songTitle);
+            songAlbumLabel.setText(songAlbum);
+            songArtistLabel.setText(songArtist);
+
+            //Set the thumb image
+            if(mListTracks.get(songIndex).getThumb()!=null)
+            new LoadThumbImage().execute(mListTracks.get(songIndex).getThumb());
+
+            // Changing Button Image to pause image
+            btnPlay.setImageResource(R.drawable.btn_pause);
+
+            // set Progress bar values
+            songProgressBar.setProgress(0);
+            songProgressBar.setMax(100);
+
+            // Updating progress bar
+            updateProgressBar();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     @Override
     public void onDetach() {
         super.onDetach();
     }
+
+    /**
+     * Update timer on seekbar
+     * */
+    public void updateProgressBar() {
+        mHandler.postDelayed(mUpdateTimeTask, 100);
+    }
+
+    /**
+     * Background Runnable thread
+     * */
+    private Runnable mUpdateTimeTask = new Runnable() {
+        public void run() {
+            long totalDuration = mp.getDuration();
+            long currentDuration = mp.getCurrentPosition();
+
+            // Displaying Total Duration time
+            songTotalDurationLabel.setText(""+utils.milliSecondsToTimer(totalDuration));
+            // Displaying time completed playing
+            songCurrentDurationLabel.setText(""+utils.milliSecondsToTimer(currentDuration));
+
+            // Updating progress bar
+            int progress = utils.getProgressPercentage(currentDuration, totalDuration);
+            //Log.d("Progress", ""+progress);
+            songProgressBar.setProgress(progress);
+
+            // Running this thread after 100 milliseconds
+            mHandler.postDelayed(this, 100);
+        }
+    };
+
+    /**
+     *
+     * */
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
+
+    }
+
+    /**
+     * When user starts moving the progress handler
+     * */
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+        // remove message Handler from updating progress bar
+        mHandler.removeCallbacks(mUpdateTimeTask);
+    }
+
+    /**
+     * When user stops moving the progress hanlder
+     * */
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        mHandler.removeCallbacks(mUpdateTimeTask);
+        int totalDuration = mp.getDuration();
+        int currentPosition = utils.progressToTimer(seekBar.getProgress(), totalDuration);
+
+        // forward or backward to certain seconds
+        mp.seekTo(currentPosition);
+
+        // update timer progress again
+        updateProgressBar();
+    }
+
+    /**
+     * On Song Playing completed
+     * if repeat is ON play same song again
+     * if shuffle is ON play random song
+     * */
+    @Override
+    public void onCompletion(MediaPlayer arg0) {
+        // check for repeat is ON or OFF
+        if(isRepeat){
+            // repeat is on play same song again
+            playSong(currentSongIndex);
+        } else if(isShuffle){
+            // shuffle is on - play a random song
+            Random rand = new Random();
+            currentSongIndex = rand.nextInt(mListTracks.size());
+            playSong(currentSongIndex);
+        } else{
+            // no repeat or shuffle ON - play next song
+            if(currentSongIndex < (mListTracks.size() - 1)){
+                currentSongIndex = currentSongIndex + 1;
+                playSong(currentSongIndex);
+
+            }else{
+                // play first song
+                playSong(0);
+                currentSongIndex = 0;
+            }
+        }
+    }
+
+    // Set the value of the Album Thumbnail
+    // I have created this Asynctask to be able to set that value on the main thread
+    private class LoadThumbImage extends AsyncTask<String, Void, Bitmap> {
+
+        @Override
+        protected Bitmap doInBackground(String... params) {
+            URL myurl;
+            Bitmap bm=null;
+
+            try {
+                myurl = new URL(params[0]);
+                URLConnection con=myurl.openConnection();
+                bm=BitmapFactory.decodeStream(con.getInputStream());
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return bm;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap result) {
+            songThumb.setImageBitmap(result);
+        }
+
+    }
+
+
 }

@@ -16,6 +16,9 @@ public class TrackModel implements Serializable, IElement {
     //Album thumbnail
     private String albThumb;
 
+    // Artist name
+    private String artist;
+
     // Preview url
     private String prevUrl;
 
@@ -49,6 +52,14 @@ public class TrackModel implements Serializable, IElement {
 
     public void setAlbum(String album) {
         this.album = album;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public void setArtist(String artist) {
+        this.artist = artist;
     }
 
     @Override

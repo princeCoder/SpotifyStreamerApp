@@ -38,4 +38,5 @@
     <string name="artist_selected_class_cast_exception_message">" must implement OnArtistSelectedListener"</string>
     <string name="track_selected_class_cast_exception_message">" must implement OnTrackSelectedListener"</string>
     <string name="top_track_fragment_tag">TopTrackFragment</string>
+    <string name="Liste_of_tracks">ListOfTracks</string>
 </resources>

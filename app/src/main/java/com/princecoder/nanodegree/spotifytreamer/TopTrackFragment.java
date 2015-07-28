@@ -87,13 +87,15 @@ public class TopTrackFragment extends Fragment {
         View rootView=inflater.inflate(R.layout.fragment_top_track, container, false);
 
         mTrackListView=(ListView)rootView.findViewById(R.id.track_listview);
-        mAdapter=new TrackAdapter(getActivity(),R.layout.track_row_item,R.id.topTxt,mTraks);
+        mAdapter=new TrackAdapter(getActivity(),R.layout.track_row_item,R.id.topTxt,new ArrayList<IElement>());
 
         mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                mListener.onTrackSelectedListener();
+                // Let the activity do the job for us
+                // We have the list of tracks to play and the selected track by the user
+                mListener.onTrackSelectedListener(mTraks,position);
             }
         });
 
@@ -128,11 +130,7 @@ public class TopTrackFragment extends Fragment {
     protected boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
-            return true;
-        } else {
-            return false;
-        }
+        return (netInfo != null && netInfo.isConnectedOrConnecting());
     }
 
     // If the user selected a new Artist
@@ -182,6 +180,7 @@ public class TopTrackFragment extends Fragment {
 
         @Override
         protected void onPostExecute(Tracks tracks) {
+            mAdapter.clear();
             mTraks.clear();
             if (tracks == null || tracks.tracks.size() == 0) {
                 mProgressDialog.dismiss();
@@ -194,26 +193,25 @@ public class TopTrackFragment extends Fragment {
                     t.setTrackName(track.name);
                     t.setPrevUrl(track.preview_url);
                     t.setAlbum(track.album.name);
+                    t.setArtist((track.artists.size()>0?track.artists.get(0).name:"Unknown Artist"));
                     if(track.album.images!=null && track.album.images.size()>0){
                         t.setAlbThumb(track.album.images.get(0).url);
                     }
+                    mAdapter.add(t);
                     mTraks.add(t);
                     count++;
-                    if(count==10)break;;
+                    if(count==10)break;
                 }
                 // dismiss the progress dialog
                 if (mProgressDialog!=null)
                     mProgressDialog.dismiss();
-
-                //update the adapter dataset
-                mAdapter.notifyDataSetChanged();
             }
         }
     }
 
     public interface OnTrackSelectedListener{
 
-        void onTrackSelectedListener();
+        void onTrackSelectedListener(ArrayList<IElement> list,int position);
     }
 
 }

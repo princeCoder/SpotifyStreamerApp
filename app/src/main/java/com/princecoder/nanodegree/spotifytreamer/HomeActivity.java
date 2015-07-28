@@ -3,12 +3,14 @@ package com.princecoder.nanodegree.spotifytreamer;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
+import com.princecoder.nanodegree.spotifytreamer.model.IElement;
+
+import java.util.ArrayList;
 
 
 public class HomeActivity extends AppCompatActivity implements HomeFragment.OnArtistSelectedListener,TopTrackFragment.OnTrackSelectedListener{
@@ -89,21 +91,20 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
         }
     }
 
+    // This is for the tablet. because with the tablet we stay in the same activity and we just display another fragment
     @Override
-    public void onTrackSelectedListener() {
+    public void onTrackSelectedListener(ArrayList<IElement>list, int position) {
+        Bundle args = new Bundle();
+        args.putSerializable(getResources().getString(R.string.Liste_of_tracks), list);
+        args.putInt("position", position);
+
         // Instanciate the nowPlaying fragment
         NowPlayingFragment fragment=new NowPlayingFragment();
+        fragment.setArguments(args);
 
         //Fragment manager
         FragmentManager manager=getSupportFragmentManager();
 
-//                Fragment transaction
-        FragmentTransaction transaction=manager.beginTransaction();
-        transaction.add(R.id.trackContainer, fragment, getResources().getString(R.string.now_playing_fragment_tag));
-
-//                add to backstack
-        transaction.addToBackStack(getResources().getString(R.string.now_playing_fragment_tag));
-        transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-        transaction.commit();
+        fragment.show(manager, "now playing");
     }
 }

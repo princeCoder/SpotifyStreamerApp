@@ -7,6 +7,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.princecoder.nanodegree.spotifytreamer.model.IElement;
+
+import java.util.ArrayList;
+
 
 public class TrackActivity extends AppCompatActivity implements TopTrackFragment.OnTrackSelectedListener{
 
@@ -16,11 +20,11 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
         setContentView(R.layout.activity_track);
 
         // Enable the up navigation
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         if (savedInstanceState == null) {
-        //We create the Top Track fragment and add it to the activity
 
+        //We create the Top Track fragment and add it to the activity
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.trackContainer, new TopTrackFragment(),getString(R.string.top_track_fragment_tag))
                     .commit();
@@ -51,21 +55,26 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
 
 
     @Override
-    public void onTrackSelectedListener() {
-        // Instanciate the nowPlaying fragment
-        NowPlayingFragment fragment=new NowPlayingFragment();
+    public void onTrackSelectedListener(ArrayList<IElement>list, int position) {
+
+        Bundle args = new Bundle();
+        args.putSerializable(getResources().getString(R.string.Liste_of_tracks), list);
+        args.putInt("position", position);
 
         //Fragment manager
         FragmentManager manager=getSupportFragmentManager();
 
-//                Fragment transaction
-        FragmentTransaction transaction=manager.beginTransaction();
-        transaction.add(R.id.trackContainer, fragment, getResources().getString(R.string.now_playing_fragment_tag));
+        // The device is smaller, so show the fragment fullscreen
+        FragmentTransaction transaction = manager.beginTransaction();
+        transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        // To make it fullscreen, use the 'content' root view as the container
+        // for the fragment, which is always the root view for the activity
 
-//                add to backstack
-        transaction.addToBackStack(getResources().getString(R.string.now_playing_fragment_tag));
-        transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-        transaction.commit();
+        // Instantiate the nowPlaying fragment
+        NowPlayingFragment fragment=new NowPlayingFragment();
+        fragment.setArguments(args);
 
+        transaction.add(R.id.trackContainer, fragment)
+                .addToBackStack(null).commit();
     }
 }
