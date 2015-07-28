@@ -200,7 +200,7 @@ public class TopTrackFragment extends Fragment {
                     mAdapter.add(t);
                     mTraks.add(t);
                     count++;
-                    if(count==10)break;
+//                    if(count==10)break;
                 }
                 // dismiss the progress dialog
                 if (mProgressDialog!=null)

@@ -39,4 +39,8 @@
     <string name="track_selected_class_cast_exception_message">" must implement OnTrackSelectedListener"</string>
     <string name="top_track_fragment_tag">TopTrackFragment</string>
     <string name="Liste_of_tracks">ListOfTracks</string>
+    <string name="shuffle_off">Shuffle is OFF</string>
+    <string name="shuffle_on">Shuffle is ON</string>
+    <string name="repeat_off">Repeat is OFF</string>
+    <string name="repeat_on">Repeat is ON</string>
 </resources>

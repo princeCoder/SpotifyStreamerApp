@@ -1,9 +1,11 @@
 package com.princecoder.nanodegree.spotifytreamer.utils;
 
+import java.io.Serializable;
+
 /**
  * Created by Prinzly Ngotoum on 7/27/15.
  */
-public class Utilities {
+public class Utilities implements Serializable{
 
     /**
      * Function to convert milliseconds time to

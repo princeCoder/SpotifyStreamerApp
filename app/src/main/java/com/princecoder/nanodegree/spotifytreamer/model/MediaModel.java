@@ -7,6 +7,25 @@ import android.media.MediaPlayer;
  */
 public class MediaModel {
 
+    private  final String TAG=getClass().getSimpleName();
+    // --------------------------------------------------------------------------------
+    // Singleton
+    // --------------------------------------------------------------------------------
+    static private volatile MediaModel mInstance = null;
+
+    static public MediaModel getInstance() {
+        if (mInstance == null) {
+            synchronized (MediaModel.class) {
+                if (mInstance == null) {
+                    mInstance = new MediaModel();
+                }
+            }
+        }
+        return mInstance;
+    }
+
+
+
     //to know if the Media is paused
     private boolean mPaused = false;
 
@@ -35,7 +54,6 @@ public class MediaModel {
     private Boolean mMediaPlayerIsPaused = false;
 
 
-
     /**
      *
      * @return
@@ -59,7 +77,7 @@ public class MediaModel {
      *
      * @param index
      */
-    void setCurrentSongIndex(int index) {
+    public void setCurrentSongIndex(int index) {
         mCurrentSongIndex = index;
         mCurrentSongIsValid = false;
     }
@@ -69,7 +87,7 @@ public class MediaModel {
      * @return
      *         The current song index in the Media player
      */
-    int getCurrentSongIndex() {
+    public int getCurrentSongIndex() {
         return mCurrentSongIndex;
     }
 

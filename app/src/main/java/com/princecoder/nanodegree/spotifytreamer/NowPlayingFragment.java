@@ -14,9 +14,10 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.model.TrackModel;
+import com.princecoder.nanodegree.spotifytreamer.utils.L;
 import com.princecoder.nanodegree.spotifytreamer.utils.Utilities;
 
 import java.io.IOException;
@@ -44,6 +45,9 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
     private TextView songTitleLabel;
     private TextView songCurrentDurationLabel;
     private TextView songTotalDurationLabel;
+
+    //Media Model
+    MediaModel mModel;
     // Media Player
     private MediaPlayer mp;
     // Handler to update UI timer, progress bar etc,.
@@ -52,7 +56,6 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
     private Utilities utils;
     private int seekForwardTime = 5000; // 5000 milliseconds
     private int seekBackwardTime = 5000; // 5000 milliseconds
-    private int currentSongIndex;
     private boolean isShuffle = false;
     private boolean isRepeat = false;
 
@@ -96,7 +99,9 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
         songTotalDurationLabel = (TextView) rootView.findViewById(R.id.songTotalDurationLabel);
         songThumb=(ImageView)rootView.findViewById(R.id.trackThumbnail);
 
-        mp = new MediaPlayer();
+        mModel=MediaModel.getInstance();
+
+        mp = mModel.getMediaPlayer();
         //        songManager = new SongsManager();
         utils = new Utilities();
 
@@ -104,17 +109,55 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
         songProgressBar.setOnSeekBarChangeListener(this); // Important
         mp.setOnCompletionListener(this); // Important
 
-        //Receive data from last fragment
-        Bundle args=getArguments();
+        if(savedInstanceState==null){
+            //Receive data from last fragment
+            Bundle args=getArguments();
 
-        if(args!=null){
-            // I retreive the informations
-            mListTracks=(ArrayList<TrackModel>)args.getSerializable(getResources().getString(R.string.Liste_of_tracks));
-            currentSongIndex=args.getInt("position");
-            mTrack = mListTracks.get(currentSongIndex);
+            if(args!=null){
+                // I retreive the informations
+                mListTracks=(ArrayList<TrackModel>)args.getSerializable(getResources().getString(R.string.Liste_of_tracks));
+                mModel.setCurrentSongIndex(args.getInt("position"));
+                mTrack = mListTracks.get(mModel.getCurrentSongIndex());
+            }
+            playSong(mModel.getCurrentSongIndex());
+        }
+        else{
+            //Update the thumbnail
+            updateUI(mModel.getCurrentSongIndex());
+
+            //Update the progress bar
+            updateProgressBar();
         }
 
-        playSong(currentSongIndex);
+
+
+        /**
+         * Play button click event
+         * plays a song and changes button to pause image
+         * pauses a song and changes button to play image
+         * */
+        btnPlay.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                // check for already playing
+                if (mp.isPlaying()) {
+                    if (mp != null) {
+                        mp.pause();
+                        // Changing button image to play button
+                        btnPlay.setImageResource(R.drawable.btn_play);
+                    }
+                } else {
+                    // Resume song
+                    if (mp != null) {
+                        mp.start();
+                        // Changing button image to pause button
+                        btnPlay.setImageResource(R.drawable.btn_pause);
+                    }
+                }
+
+            }
+        });
 
 
         /**
@@ -172,13 +215,14 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
             @Override
             public void onClick(View arg0) {
                 // check if next song is there or not
-                if(currentSongIndex < (mListTracks.size() - 1)){
-                    currentSongIndex = currentSongIndex + 1;
+                if(mModel.getCurrentSongIndex() < (mListTracks.size() - 1)){
+                    int currentSongIndex = mModel.getCurrentSongIndex() + 1;
+                    mModel.setCurrentSongIndex(currentSongIndex);
                     playSong(currentSongIndex);
                 }else{
                     // play first song
                     playSong(0);
-                    currentSongIndex = 0;
+                    mModel.setCurrentSongIndex(0);
                 }
 
             }
@@ -192,18 +236,47 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
 
             @Override
             public void onClick(View arg0) {
-                if(currentSongIndex > 0){
-                    currentSongIndex = currentSongIndex - 1;
-                    playSong(currentSongIndex);
+                if(mModel.getCurrentSongIndex() > 0){
+                    int currentSongIndex = mModel.getCurrentSongIndex() - 1;
+                    mModel.setCurrentSongIndex(currentSongIndex);
+                    playSong(mModel.getCurrentSongIndex());
 
                 }else{
-                    currentSongIndex = mListTracks.size() - 1;
+                    mModel.setCurrentSongIndex(mListTracks.size() - 1);
+
                     // play last song
-                    playSong(currentSongIndex);
+                    playSong(mModel.getCurrentSongIndex());
                 }
 
             }
         });
+
+
+        /**
+         * Button Click event for Repeat button
+         * Enables repeat flag to true
+         * */
+        btnRepeat.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                if(isRepeat){
+                    isRepeat = false;
+                    L.toast(getActivity(), getResources().getString(R.string.repeat_off));
+                    btnRepeat.setImageResource(R.drawable.btn_repeat);
+                }else{
+                    // make repeat to true
+                    isRepeat = true;
+                    L.toast(getActivity(), getResources().getString(R.string.repeat_on));
+                    // make shuffle to false
+                    isShuffle = false;
+                    btnRepeat.setImageResource(R.drawable.btn_repeat_focused);
+                    btnShuffle.setImageResource(R.drawable.btn_shuffle);
+                }
+            }
+        });
+
+
 
         /**
          * Button Click event for Shuffle button
@@ -215,12 +288,12 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
             public void onClick(View arg0) {
                 if(isShuffle){
                     isShuffle = false;
-                    Toast.makeText(getActivity(), "Shuffle is OFF", Toast.LENGTH_SHORT).show();
+                    L.toast(getActivity(), getResources().getString(R.string.shuffle_off));
                     btnShuffle.setImageResource(R.drawable.btn_shuffle);
                 }else{
                     // make repeat to true
                     isShuffle= true;
-                    Toast.makeText(getActivity(), "Shuffle is ON", Toast.LENGTH_SHORT).show();
+                    L.toast(getActivity(), getResources().getString(R.string.shuffle_on));
                     // make shuffle to false
                     isRepeat = false;
                     btnShuffle.setImageResource(R.drawable.btn_shuffle_focused);
@@ -247,21 +320,9 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
             mp.setDataSource(mListTracks.get(songIndex).getPrevUrl());
             mp.prepare();
             mp.start();
-            // Displaying Song title
-            String songTitle = mListTracks.get(songIndex).getTrackName();
-            String songAlbum=mListTracks.get(songIndex).getAlbum();
-            String songArtist=mListTracks.get(songIndex).getArtist();
-            songTitleLabel.setText(songTitle);
-            songAlbumLabel.setText(songAlbum);
-            songArtistLabel.setText(songArtist);
 
-            //Set the thumb image
-            if(mListTracks.get(songIndex).getThumb()!=null)
-            new LoadThumbImage().execute(mListTracks.get(songIndex).getThumb());
-
-            // Changing Button Image to pause image
-            btnPlay.setImageResource(R.drawable.btn_pause);
-
+            // Update UI elements
+            updateUI(songIndex);
             // set Progress bar values
             songProgressBar.setProgress(0);
             songProgressBar.setMax(100);
@@ -276,10 +337,42 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
     }
 
 
+    //Reset the playPause button
+    private void resetPlayPauseButton(){
+        if(mp.isPlaying())
+            btnPlay.setImageResource(R.drawable.btn_pause);
+        else
+            btnPlay.setImageResource(R.drawable.btn_play);
+    }
+
+
+    //Update UI elements
+    private void updateUI(int songIndex) {
+
+        //Reset the playPause button
+        resetPlayPauseButton();
+
+        // Displaying Song title
+        String songTitle = mListTracks.get(songIndex).getTrackName();
+        String songAlbum=mListTracks.get(songIndex).getAlbum();
+        String songArtist=mListTracks.get(songIndex).getArtist();
+
+
+        songTitleLabel.setText(songTitle);
+        songAlbumLabel.setText(songAlbum);
+        songArtistLabel.setText(songArtist);
+
+        //Set the thumb image
+        if(mListTracks.get(songIndex).getThumb()!=null)
+        new LoadThumbImage().execute(mListTracks.get(songIndex).getThumb());
+    }
+
+
     @Override
     public void onDetach() {
         super.onDetach();
     }
+
 
     /**
      * Update timer on seekbar
@@ -293,23 +386,35 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
      * */
     private Runnable mUpdateTimeTask = new Runnable() {
         public void run() {
-            long totalDuration = mp.getDuration();
-            long currentDuration = mp.getCurrentPosition();
+            try {
+                long totalDuration = mp.getDuration();
+                long currentDuration = mp.getCurrentPosition();
 
-            // Displaying Total Duration time
-            songTotalDurationLabel.setText(""+utils.milliSecondsToTimer(totalDuration));
-            // Displaying time completed playing
-            songCurrentDurationLabel.setText(""+utils.milliSecondsToTimer(currentDuration));
+                // Displaying Total Duration time
+                songTotalDurationLabel.setText(""+utils.milliSecondsToTimer(totalDuration));
+                // Displaying time completed playing
+                songCurrentDurationLabel.setText(""+utils.milliSecondsToTimer(currentDuration));
 
-            // Updating progress bar
-            int progress = utils.getProgressPercentage(currentDuration, totalDuration);
-            //Log.d("Progress", ""+progress);
-            songProgressBar.setProgress(progress);
+                // Updating progress bar
+                int progress = utils.getProgressPercentage(currentDuration, totalDuration);
+                //Log.d("Progress", ""+progress);
+                songProgressBar.setProgress(progress);
 
-            // Running this thread after 100 milliseconds
-            mHandler.postDelayed(this, 100);
+                // Running this thread after 100 milliseconds
+                mHandler.postDelayed(this, 100);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
         }
     };
+
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        setRetainInstance(true);
+    }
+
 
     /**
      *
@@ -354,22 +459,23 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
         // check for repeat is ON or OFF
         if(isRepeat){
             // repeat is on play same song again
-            playSong(currentSongIndex);
+            playSong(mModel.getCurrentSongIndex());
         } else if(isShuffle){
             // shuffle is on - play a random song
             Random rand = new Random();
-            currentSongIndex = rand.nextInt(mListTracks.size());
-            playSong(currentSongIndex);
+            mModel.setCurrentSongIndex(rand.nextInt(mListTracks.size()));
+            playSong(mModel.getCurrentSongIndex());
         } else{
             // no repeat or shuffle ON - play next song
-            if(currentSongIndex < (mListTracks.size() - 1)){
-                currentSongIndex = currentSongIndex + 1;
-                playSong(currentSongIndex);
+            if(mModel.getCurrentSongIndex() < (mListTracks.size() - 1)){
+                int currentSongIndex = mModel.getCurrentSongIndex() + 1;
+                mModel.setCurrentSongIndex(currentSongIndex);
+                playSong(mModel.getCurrentSongIndex());
 
             }else{
                 // play first song
                 playSong(0);
-                currentSongIndex = 0;
+                mModel.setCurrentSongIndex(0);
             }
         }
     }
@@ -401,6 +507,5 @@ public class NowPlayingFragment extends DialogFragment implements MediaPlayer.On
         }
 
     }
-
 
 }
