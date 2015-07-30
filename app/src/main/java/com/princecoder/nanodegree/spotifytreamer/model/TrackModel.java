@@ -22,6 +22,8 @@ public class TrackModel implements Serializable, IElement {
     // Preview url
     private String prevUrl;
 
+    // Getters and Setters
+
     public String getTrackName() {
         return trackName;
     }

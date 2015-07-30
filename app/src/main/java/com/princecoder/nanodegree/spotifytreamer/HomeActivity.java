@@ -2,7 +2,6 @@ package com.princecoder.nanodegree.spotifytreamer;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,6 +14,7 @@ import java.util.ArrayList;
 
 public class HomeActivity extends AppCompatActivity implements HomeFragment.OnArtistSelectedListener,TopTrackFragment.OnTrackSelectedListener{
 
+    // boolean value to know if it is a tablet or not
     private boolean mTwoPane;
 
     @Override
@@ -54,7 +54,6 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
         if (id == R.id.action_settings) {
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -71,9 +70,9 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
             }
             else{
                 Bundle args = new Bundle();
-                args.putSerializable("Artist",artist);
+                args.putSerializable(getString(R.string.selected_artist),artist);
 
-                // Create fragment and give it an argument for the selected article
+                // Create fragment and pass the selected artist as argument
                 fragment = new TopTrackFragment();
                 fragment.setArguments(args);
             }
@@ -82,7 +81,7 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
             // Replace whatever is in the fragment_container view with this fragment
             getSupportFragmentManager().beginTransaction().replace(R.id.trackContainer, fragment,getResources().getString(R.string.top_track_fragment_tag)).commit();
         }
-        else{
+        else{// we are not on a tablet. we start a new activity
             if(artist!=null){
                 Intent intent = new Intent(this, TrackActivity.class)
                         .putExtra(Intent.EXTRA_TEXT, artist);
@@ -91,20 +90,20 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
         }
     }
 
-    // This is for the tablet. because with the tablet we stay in the same activity and we just display another fragment
+    // We implement this method because the activity  has to display the now playing screen as a dialog
     @Override
     public void onTrackSelectedListener(ArrayList<IElement>list, int position) {
         Bundle args = new Bundle();
+        // List of tracks
         args.putSerializable(getResources().getString(R.string.Liste_of_tracks), list);
-        args.putInt("position", position);
 
-        // Instanciate the nowPlaying fragment
+        // Selected track index
+        args.putInt(getString(R.string.track_index), position);
+
+        // Instanciate the nowPlaying fragment and pass the arguments
         NowPlayingFragment fragment=new NowPlayingFragment();
         fragment.setArguments(args);
 
-        //Fragment manager
-        FragmentManager manager=getSupportFragmentManager();
-
-        fragment.show(manager, "now playing");
+        fragment.show(getSupportFragmentManager(), "now playing");
     }
 }

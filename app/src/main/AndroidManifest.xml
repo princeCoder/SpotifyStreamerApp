@@ -27,6 +27,7 @@
             android:parentActivityName=".HomeActivity"
             android:label="@string/title_activity_track" >
         </activity>
+        <service android:name=".NowPlayingFragment$MyService"/>
     </application>
 
 </manifest>

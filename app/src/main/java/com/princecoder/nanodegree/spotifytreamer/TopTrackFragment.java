@@ -110,7 +110,7 @@ public class TopTrackFragment extends Fragment {
         else{ // We are in dual pane mode
             Bundle args=getArguments();
             if(args!=null){
-                mArtist = (ArtistModel)args.getSerializable("Artist");
+                mArtist = (ArtistModel)args.getSerializable(getString(R.string.selected_artist));
                 new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
             }
         }

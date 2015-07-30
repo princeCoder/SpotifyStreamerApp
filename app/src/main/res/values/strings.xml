@@ -29,18 +29,43 @@
     <!--Progress Dialog message-->
     <string name="progress_dialog_message">Please wait ...</string>
 
+    <!--Selected track index  -->
+    <string name="track_index">track_index</string>
+
+    <!--Selected artist-->
+    <string name="selected_artist">selected_artist</string>
+
     <string name="progress_dialog_title">Working</string>
+
+    <!--Picasso error-->
     <string name="picasso_error">" Picasso Error"</string>
 
-<!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <!--Now playing fragment tag-->
     <string name="now_playing_fragment_tag">NowPlayingFragment</string>
+
+    <!--Display a message when OnArtistSelectedListener is not implemented-->
     <string name="artist_selected_class_cast_exception_message">" must implement OnArtistSelectedListener"</string>
+
+    <!--Display a message when OnTrackSelectedListener is not implemented-->
     <string name="track_selected_class_cast_exception_message">" must implement OnTrackSelectedListener"</string>
+
+    <!--Top track fragment tag-->
     <string name="top_track_fragment_tag">TopTrackFragment</string>
+
+    <!--To handle the list of tracks-->
+    <!--this value helps us to save the list of tracks when heading in the now playing screen-->
     <string name="Liste_of_tracks">ListOfTracks</string>
+
+    <!--shuffle_off toast message-->
     <string name="shuffle_off">Shuffle is OFF</string>
+
+    <!--shuffle_on toast message-->
     <string name="shuffle_on">Shuffle is ON</string>
+
+    <!--Repeat_off toast message-->
     <string name="repeat_off">Repeat is OFF</string>
+
+    <!--Repeat_on toast message-->
     <string name="repeat_on">Repeat is ON</string>
+
 </resources>

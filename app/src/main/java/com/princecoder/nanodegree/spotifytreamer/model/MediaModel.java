@@ -5,8 +5,11 @@ import android.media.MediaPlayer;
 /**
  * Created by Prinzly Ngotoum on 7/27/15.
  */
+
+//This class is a singleton because I want to make sure we always have one instance to control the media player
 public class MediaModel {
 
+    //Log Tag
     private  final String TAG=getClass().getSimpleName();
     // --------------------------------------------------------------------------------
     // Singleton
@@ -41,7 +44,7 @@ public class MediaModel {
     private TrackModel mCurrentTrack = null;
     private Boolean mCurrentSongIsValid = false;
 
-    /* Shuffle mode */
+    // Shuffle mode
     private boolean mShuffle = false;
 
     /* Repeat mode */
@@ -179,5 +182,11 @@ public class MediaModel {
         this.mRepeat = mRepeat;
     }
 
-
+    /**
+     * Set the shuffle mode
+     * @param mShuffle
+     */
+    public void setShuffle(boolean mShuffle) {
+        this.mShuffle = mShuffle;
+    }
 }
