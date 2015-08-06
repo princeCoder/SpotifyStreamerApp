@@ -5,5 +5,7 @@
     <color name="white">#FFF</color>
     <color name="red">#E25050</color>
     <color name="grey">#cccccc</color>
-    <color name="spotify_light_blue">#ff64c2f4</color>
+    <color name="spotify_yellow_green">#ADFF2F</color>
+    <color name="spotify_light_blue">#ADD8E6</color>
+
 </resources>

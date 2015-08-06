@@ -55,7 +55,6 @@
             android:id="@+id/trackThumbnail"
             android:layout_width="match_parent"
                    android:layout_height="match_parent"
-                   android:src="@mipmap/img_defaut"
             />
     </LinearLayout>
 
@@ -183,7 +182,17 @@
             android:marqueeRepeatLimit="marquee_forever"
             android:text="A sky full of stars"
             android:layout_marginTop="10dp"/>
+
+        <ProgressBar
+            android:id="@+id/player_loading_indicator"
+            style="@android:style/Widget.ProgressBar.Small"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_below="@id/player_song_bg"
+            android:layout_marginTop="5dip"
+            android:visibility="invisible" />
     </LinearLayout>
+
 
     <!-- Repeat / Shuffle buttons -->
     <LinearLayout

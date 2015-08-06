@@ -10,7 +10,6 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
@@ -40,7 +39,7 @@ import retrofit.RetrofitError;
 public class HomeFragment extends Fragment {
 
     // ListView to display artists
-    private ListView mListViewArtist;
+    private ListView mListView;
 
     // List of Artists
     private ArrayList<IElement> mListOfArtist=new ArrayList<>();
@@ -59,6 +58,14 @@ public class HomeFragment extends Fragment {
 
     //Position
     private int mPosition;
+
+    //Selected item
+
+    private final String SELECTED_KEY="Selected_key";
+
+    //List_TAG
+
+    private final String LIST_TAG="List";
 
     public HomeFragment() {
         // Required empty public constructor
@@ -83,27 +90,15 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return updateUI(inflater, container);
-    }
 
-    @NonNull
-    private View updateUI(LayoutInflater inflater, ViewGroup container) {
+
         // Inflate the layout for this fragment
         View myView= inflater.inflate(R.layout.fragment_home, container, false);
 
-        mListViewArtist = (ListView) myView.findViewById(R.id.artist_listview);
+        mListView = (ListView) myView.findViewById(R.id.artist_listview);
         mSearchText =(SearchView)myView.findViewById(R.id.searchText);
 
-        //Initialize the adapter
-        mAdapter = new ArtistAdapter(getActivity(), R.layout.artist_row_item, R.id.topTxt, mListOfArtist);
-
-
-        // Set the adapter
-        mListViewArtist.setAdapter(mAdapter);
-
-        mListViewArtist.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-
-        mListViewArtist.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int position,
@@ -116,7 +111,7 @@ public class HomeFragment extends Fragment {
                 //Notify the activity to handle the clic event
                 mListener.onArtistSelectedListener(artist);
 
-                mPosition=position;
+                mPosition = position;
             }
         });
 
@@ -144,7 +139,7 @@ public class HomeFragment extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String s) {
-                if(s.isEmpty()){
+                if (s.isEmpty()) {
                     mListOfArtist.clear();
                     mAdapter.notifyDataSetChanged();
                     mListener.onArtistSelectedListener(null);
@@ -152,43 +147,67 @@ public class HomeFragment extends Fragment {
                 return false;
             }
         });
-        return myView;
-    }
 
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if (savedInstanceState!=null){
-            mPosition=savedInstanceState.getInt("Selected_Key");
-            mListViewArtist.setItemChecked(mPosition,true);
+            return myView;
         }
-    }
 
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        if(mPosition!=ListView.INVALID_POSITION){
-            outState.putInt("Selected_Key",mPosition);
+        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+        @Override
+        public void onActivityCreated(Bundle savedInstanceState) {
+            super.onActivityCreated(savedInstanceState);
+
+            if (savedInstanceState!=null) {
+                if (savedInstanceState.containsKey(SELECTED_KEY)) {
+                    mPosition = savedInstanceState.getInt(SELECTED_KEY);
+                    if (mPosition != ListView.INVALID_POSITION) {
+                        mListView.smoothScrollToPosition(mPosition);
+                    }
+
+                }
+
+                if (savedInstanceState.containsKey(LIST_TAG)) {
+                    mListOfArtist= (ArrayList<IElement>) savedInstanceState.getSerializable(LIST_TAG);
+                }
+            }
+
+            //Initialize the adapter
+            mAdapter = new ArtistAdapter(getActivity(), R.layout.artist_row_item, R.id.topTxt, mListOfArtist);
+
+
+            // Set the adapter
+            mListView.setAdapter(mAdapter);
+
+            mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
+            setRetainInstance(true);
         }
-        super.onSaveInstanceState(outState);
-    }
 
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        mListViewArtist.setAdapter(mAdapter);
-    }
+        @Override
+        public void onSaveInstanceState(Bundle outState) {
+            if(mPosition!=ListView.INVALID_POSITION){
+                outState.putInt(SELECTED_KEY,mPosition);
+            }
+            outState.putSerializable(LIST_TAG,mListOfArtist);
+            super.onSaveInstanceState(outState);
+        }
 
 
-    /**
-     * Are we online?
-     *
-     * @return boolean
-     *
-     */
+        @Override
+        public void onConfigurationChanged(Configuration newConfig) {
+            super.onConfigurationChanged(newConfig);
+            mListView.setAdapter(mAdapter);
+        }
+
+
+        /**
+         * Are we online?
+         *
+         * @return boolean
+         *
+         */
     protected boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();

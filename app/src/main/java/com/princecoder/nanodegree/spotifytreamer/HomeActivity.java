@@ -95,10 +95,10 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
     public void onTrackSelectedListener(ArrayList<IElement>list, int position) {
         Bundle args = new Bundle();
         // List of tracks
-        args.putSerializable(getResources().getString(R.string.Liste_of_tracks), list);
+        args.putSerializable(NowPlayingFragment.LIST_TRACKS, list);
 
         // Selected track index
-        args.putInt(getString(R.string.track_index), position);
+        args.putInt(NowPlayingFragment.TRACK_INDEX, position);
 
         // Instanciate the nowPlaying fragment and pass the arguments
         NowPlayingFragment fragment=new NowPlayingFragment();

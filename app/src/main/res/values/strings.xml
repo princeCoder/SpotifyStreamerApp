@@ -28,10 +28,6 @@
 
     <!--Progress Dialog message-->
     <string name="progress_dialog_message">Please wait ...</string>
-
-    <!--Selected track index  -->
-    <string name="track_index">track_index</string>
-
     <!--Selected artist-->
     <string name="selected_artist">selected_artist</string>
 
@@ -52,9 +48,15 @@
     <!--Top track fragment tag-->
     <string name="top_track_fragment_tag">TopTrackFragment</string>
 
-    <!--To handle the list of tracks-->
-    <!--this value helps us to save the list of tracks when heading in the now playing screen-->
-    <string name="Liste_of_tracks">ListOfTracks</string>
+    <string name="msg_playback_error">Unable to play media. Moving to the
+        next item.</string>
+
+    <string name="msg_playback_connection_error">Connection error.  Retrying
+        in 30 seconds.</string>
+
+    <string name="msg_playback_invalid_playable_error">Unable to play selected item.</string>
+
+    <string name="msg_unknown_error">Unknown error occurred.</string>
 
     <!--shuffle_off toast message-->
     <string name="shuffle_off">Shuffle is OFF</string>

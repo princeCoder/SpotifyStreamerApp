@@ -2,6 +2,8 @@ package com.princecoder.nanodegree.spotifytreamer.model;
 
 import android.media.MediaPlayer;
 
+import java.util.ArrayList;
+
 /**
  * Created by Prinzly Ngotoum on 7/27/15.
  */
@@ -38,10 +40,15 @@ public class MediaModel {
     // mediaplayer
     private MediaPlayer mMediaPlayer;
 
-    // Set the current song in the Media Player
+    // Current track index in the Media Player
     private int mCurrentSongIndex = 0;
 
+    //Current track
     private TrackModel mCurrentTrack = null;
+
+    private ArrayList<TrackModel> mTrackList=new ArrayList<>();
+
+    //Is the song valid?
     private Boolean mCurrentSongIsValid = false;
 
     // Shuffle mode
@@ -135,7 +142,7 @@ public class MediaModel {
      *
      * @return true if the mediaplayer is currently playing a song
      */
-    public Boolean isPlayingASong() {
+    public Boolean isPlaying() {
         return mMediaPlayerIsPlaying;
     }
 
@@ -188,5 +195,29 @@ public class MediaModel {
      */
     public void setShuffle(boolean mShuffle) {
         this.mShuffle = mShuffle;
+    }
+
+    public TrackModel getCurrentTrack() {
+        return mCurrentTrack;
+    }
+
+    public void setCurrentTrack(TrackModel mCurrentTrack) {
+        this.mCurrentTrack = mCurrentTrack;
+    }
+
+    public Boolean getCurrentSongIsValid() {
+        return mCurrentSongIsValid;
+    }
+
+    public void setCurrentSongIsValid(Boolean mCurrentSongIsValid) {
+        this.mCurrentSongIsValid = mCurrentSongIsValid;
+    }
+
+    public ArrayList<TrackModel> getTrackList() {
+        return mTrackList;
+    }
+
+    public void setTrackList(ArrayList<TrackModel> mTrackList) {
+        this.mTrackList = mTrackList;
     }
 }
