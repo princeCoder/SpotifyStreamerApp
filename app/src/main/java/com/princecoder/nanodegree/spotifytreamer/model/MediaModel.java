@@ -95,9 +95,9 @@ public class MediaModel {
     /**
      *
      * @return
-     *         The current song index in the Media player
+     *         The current Track index in the Media player
      */
-    public int getCurrentSongIndex() {
+    public int getCurrentTrackIndex() {
         return mCurrentSongIndex;
     }
 

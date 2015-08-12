@@ -23,6 +23,7 @@ import com.princecoder.nanodegree.spotifytreamer.utils.L;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Random;
 
 
@@ -32,7 +33,7 @@ import java.util.Random;
  * This class helps me to handle the Media player in a service
  */
 public class MediaPlayerService extends Service implements MediaPlayer.OnCompletionListener,
-        MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnInfoListener {
+        MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnInfoListener{
 
     //Log Tag
     public final String LOG_TAG =getClass().getSimpleName();
@@ -45,14 +46,21 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     // Media Model
     private MediaModel mModel;
 
-    //List of tracks LOG_TAG
+    //List of tracks tag
     public static final String TRACKS_LIST="TRACKS_LIST";
 
-    //Current track LOG_TAG
+    //Current track tag
     public static final String CURRENT_TRACK="CURRENT_TRACK";
 
 
-    private TrackModel mCurrentTrack;
+    //My Current Tracks
+    private TrackModel mCurrentTrack =new TrackModel();
+
+    private int mCurrentTrackIndex;
+
+    //List of tracks
+    private ArrayList<TrackModel> mListTracks=new ArrayList<>();
+
 
     private Handler mHandler = new Handler();
 
@@ -63,7 +71,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private int startId;
 
     // Error handling
-    private int errorCount;
     private int connectionErrorWaitTime;
     private int seekToPosition;
 
@@ -74,11 +81,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     // Amount of time to rewind playback when resuming after call
     private final static int RESUME_REWIND_TIME = 3000;
-    private final static int ERROR_RETRY_COUNT = 3;
     private final static int RETRY_SLEEP_TIME = 30000;
 
     private int seekForwardTime = 5000; // 5000 milliseconds
     private int seekBackwardTime = 5000; // 5000 milliseconds
+
+    private int lastBufferPercent = 0;
 
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
@@ -86,9 +94,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private Intent lastChangeBroadcast;
     private Intent lastUpdateBroadcast;
 
+    public static final String CURRENT_POSITION="CURRENT_POSITION";
+
 
     public static final String MEDIASERVICE_PLAYPAUSE="MEDIASERVICE_PLAYPAUSE";
-    public static final String MEDIASERVICE_START_PLAYER="MEDIASERVICE_START_PLAYER";
+    public static final String MEDIASERVICE_SEEK_TO="MEDIASERVICE_SEEK_TO";
+    public static final String MEDIASERVICE_START_START_SELECTED_TRACK="MEDIASERVICE_START_START_SELECTED_TRACK";
     public static final String MEDIASERVICE_NEXT="MEDIASERVICE_NEXT";
     public static final String MEDIASERVICE_PREVIOUS="MEDIASERVICE_PREVIOUS";
     public static final String MEDIASERVICE_BACKWARD="MEDIASERVICE_BACKWARD";
@@ -98,18 +109,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     public static final String SERVICE_ERROR_NAME = "SERVICE_ERROR_NAME";
     public static final String SERVICE_CLOSE_NAME = "CLOSE";
-    public static final String SERVICE_CHANGE_NAME = "CHANGE";
     public static final String SERVICE_UPDATE_NAME = "UPDATE";
-
-    public static final String EXTRA_DURATION = "EXTRA_DURATION";
-    public static final String EXTRA_POSITION = "EXTRA_POSITION";
+    public static final String SERVICE_UPDATE_PLAY_PAUSE="SERVICE_UPDATE_PLAY_PAUSE";
+    public static final String SERVICE_UPDATE_UI="SERVICE_UPDATE_UI";
     public static final String EXTRA_IS_PLAYING = "EXTRA_IS_PLAYING";
-    public static final String EXTRA_IS_PREPARED = "EXTRA_IS_PREPARED";
-    public static final String EXTRA_DOWNLOADED = "EXTRA_DOWNLOADED";
-
     public static final String EXTRA_ERROR = "EXTRA_ERROR";
 
-    public enum PLAYBACK_SERVICE_ERROR {Connection, Playback, InvalidPlayable}
+    public enum MEDIAPLAYER_SERVICE_ERROR {Connection, MediaPlayer, InvalidTrack}
 
     private String currentAction;
 
@@ -140,17 +146,20 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         mp.setOnCompletionListener(this);
         mp.setOnErrorListener(this);
         mp.setOnInfoListener(this);
+
     }
 
 
 
     @Override
     public void onCreate() {
-        // TODO initialize my Media player
 
+        //Get the instance of the model
         mModel=MediaModel.getInstance();
+
         // Get the player
         mp = mModel.getMediaPlayer();
+
         //Initialize the Media Player
         initMediaPlayer();
 
@@ -201,6 +210,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         message.arg1 = startId;
         message.obj = intent;
         serviceHandler.sendMessage(message);
+        mCurrentTrack=mModel.getCurrentTrack();
+        mListTracks=mModel.getTrackList();
+        mCurrentTrackIndex=mModel.getCurrentTrackIndex();
+
         return START_STICKY;
     }
 
@@ -212,10 +225,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             return;
         }
 
-        String action = intent.getAction();
-        currentAction=action;
-        Log.d(LOG_TAG, "Media Player service action received: " + action);
-        switch (action){
+        currentAction=intent.getAction();
+        Log.d(LOG_TAG, "Media Player service action received: " + currentAction);
+        switch (currentAction){
             case MEDIASERVICE_PLAYPAUSE:
                 playPause();
                 break;
@@ -237,8 +249,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             case MEDIASERVICE_SHUFFLE:
                 shuffle();
                 break;
-            case MEDIASERVICE_START_PLAYER:
-                playCurrent(0,1);
+            case MEDIASERVICE_START_START_SELECTED_TRACK:
+                playCurrent();
+                break;
+            case MEDIASERVICE_SEEK_TO:
+                seekTo(intent.getIntExtra(CURRENT_POSITION,0));
                 break;
             default:
                 break;
@@ -257,25 +272,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public void onDestroy() {
         super.onDestroy();
         Log.w(LOG_TAG, "Service exiting");
-
         stop();
-
-//        if (mHandler != null) {
-//            mHandler.
-//            updateProgressThread.interrupt();
-//            try {
-//                updateProgressThread.join(1000);
-//            } catch (InterruptedException e) {
-//                Log.e(LOG_TAG, "", e);
-//            }
-//        }
-
         synchronized (this) {
             if (mp != null) {
                 if (mediaPlayerHasStarted) {
                     mp.release();
                 } else {
-                    mp.setOnBufferingUpdateListener(null);
                     mp.setOnCompletionListener(null);
                     mp.setOnErrorListener(null);
                     mp.setOnInfoListener(null);
@@ -310,25 +312,29 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             // check for repeat is ON or OFF
             if(mModel.isRepeat()){
                 // repeat is on play same song again
-                playCurrent(0, 1);
+                playCurrent();
             } else if(mModel.isShuffle()){
                 // shuffle is on - play a random song
                 Random rand = new Random();
-                int currentSongIndex = rand.nextInt((mModel.getTrackList().size() - 1)+ 1);
-                mModel.setCurrentSongIndex(currentSongIndex);
-                playCurrent(0, 1);
+                int currentSongIndex = rand.nextInt(mListTracks.size());
+                mCurrentTrackIndex=currentSongIndex;
+                mModel.setCurrentSongIndex(mCurrentTrackIndex);
+                playCurrent();
             } else{
                 // no repeat or shuffle ON - play next song
-                if(mModel.getCurrentSongIndex() < mModel.getTrackList().size() - 1){
-                    int currentSongIndex = mModel.getCurrentSongIndex() + 1;
-                    mModel.setCurrentSongIndex(currentSongIndex);
-                    playCurrent(0, 1);
+                if(mCurrentTrackIndex < mListTracks.size() - 1){
+                    int currentSongIndex = mCurrentTrackIndex + 1;
+                    mCurrentTrackIndex=currentSongIndex;
+                    mModel.setCurrentSongIndex(mCurrentTrackIndex);
+
+                    playCurrent();
 
 
                 }else{
                     // play first song
-                    mModel.setCurrentSongIndex(0);
-                    playCurrent(0, 1);
+                    mCurrentTrackIndex=0;
+                    mModel.setCurrentSongIndex(mCurrentTrackIndex);
+                    playCurrent();
                 }
             }
     }
@@ -338,14 +344,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     synchronized private void pause() {
         Log.d(LOG_TAG, "pause");
         if (isPrepared) {
-            if (mModel.getCurrentTrack() != null) {
+            if (mCurrentTrack != null) {
                 isPrepared = false;
                 mp.stop();
             } else {
                 mp.pause();
             }
         }
-
         stopForeground(true);
     }
 
@@ -359,8 +364,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
 
+
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
+        Log.d(LOG_TAG, "Error:  " + what + " " + extra);
+        //Todo I notify the user there is an error
         return false;
     }
 
@@ -372,45 +380,38 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 isPrepared = true;
             }
         }
-
-        if (seekToPosition > 0) {
-            Log.d(LOG_TAG, "Seeking to starting position: " + seekToPosition);
-            if(mp!=null)
-            mp.seekTo(seekToPosition);
-        } else {
-            startPlaying();
-        }
+        // Start playing the track
+        startPlaying();
     }
 
 
     // Resume the mediaplayer
     private void resumePlaying() {
-        if (mModel.getCurrentTrack() != null) {
+        if (mCurrentTrack != null) {
             if (isPrepared) {
                 play();
             } else {
-                playCurrent(0, 1);
+                playCurrent();
             }
         }
     }
 
     // Play current track index
-    private boolean playCurrent(int startingErrorCount, int startingWaitTime) {
-        errorCount = startingErrorCount;
-        connectionErrorWaitTime = startingWaitTime;
-        while (errorCount < ERROR_RETRY_COUNT) {
+    private boolean playCurrent() {
             try {
                 if(mModel!=null){
-                    if (mModel.getCurrentTrack() == null || mModel.getCurrentTrack().getPrevUrl() == null) {
+                    mCurrentTrack=mListTracks.get(mCurrentTrackIndex);
+                    if (mCurrentTrack == null || mCurrentTrack.getPrevUrl() == null) {
                         Intent intent = new Intent(SERVICE_ERROR_NAME);
-                        intent.putExtra(EXTRA_ERROR, PLAYBACK_SERVICE_ERROR.InvalidPlayable.ordinal());
+                        intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal());
                         getApplicationContext().sendBroadcast(intent);
 
                         return false;
                     }
-                    TrackModel track=mModel.getTrackList().get(mModel.getCurrentSongIndex());
-                    mModel.setCurrentTrack(track);
-                    prepareThenPlay(mModel.getCurrentTrack().getPrevUrl());
+                    //Update the model with the current song
+                    mModel.setCurrentTrack(mCurrentTrack);
+                    //Prepare then play the current song
+                    prepareThenPlay(mCurrentTrack.getPrevUrl());
                     return true;
                 }
             } catch (UnknownHostException e) {
@@ -420,23 +421,21 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 Log.w(LOG_TAG, "Connect exception in playCurrent");
                 handleConnectionError();
             } catch (IOException e) {
-                Log.e(LOG_TAG, "IOException on playlist entry " + mModel.getCurrentTrack().getTrackName(), e);
-                incrementErrorCount();
+                Log.e(LOG_TAG, "IOException on playlist entry " + mCurrentTrack.getTrackName(), e);
             } catch (IllegalStateException e) {
-                Log.e(LOG_TAG, "Illegal state exception trying to play entry " + mModel.getCurrentTrack().getTrackName(), e);
-                incrementErrorCount();
+                Log.e(LOG_TAG, "Illegal state exception trying to play entry " + mCurrentTrack.getTrackName(), e);
             }
-        }
-
         return false;
     }
 
 
+    //Prepare then play a song using the url
     private void prepareThenPlay(String url)
             throws IllegalArgumentException, IllegalStateException, IOException {
-        Log.d(LOG_TAG, "prepareThenPlay " + mModel.getCurrentTrack().getTrackName());
+        Log.d(LOG_TAG, "prepareThenPlay " + mCurrentTrack.getTrackName());
         // First, clean up any existing audio.
         stop();
+        mediaPlayerHasStarted = false;
         Log.d(LOG_TAG, "listening to " + url);
         synchronized (this) {
             Log.d(LOG_TAG, "reset: " + url);
@@ -454,19 +453,23 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private void startPlaying() {
         Log.d(LOG_TAG, "StartPlaying: ");
         play();
-        //Call the handler to update UI elements
-        mHandler.postDelayed(mUpdateUITask, 100);
+        //Update UI Elements
+        updateUI();
+        //Todo update the progress bar
+
+
     }
 
 
     /**
      * Background Runnable thread
      * */
-    private Runnable mUpdateUITask = new Runnable() {
+    private Runnable mUpdateTask = new Runnable() {
         public void run() {
             updateProgress();
         }
     };
+
 
 
 
@@ -475,45 +478,60 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
      */
     private void updateProgress() {
         Log.d(LOG_TAG, "UpdateProgress");
+
+        // Stop updating after mediaplayer is released
+        if (mp == null)
+            return;
+
+        if (isPrepared) {
+
+            if (lastUpdateBroadcast != null) {
+                getApplicationContext().removeStickyBroadcast(lastUpdateBroadcast);
+                lastUpdateBroadcast = null;
+            }
+
+            seekToPosition = mp.getCurrentPosition();
+
+
+            Intent tempUpdateBroadcast = new Intent(SERVICE_UPDATE_NAME);
+
+            // Update broadcasts while playing are not sticky, due to concurrency
+            // issues.  These fire very often, so this shouldn't be a problem.
+            getApplicationContext().sendBroadcast(tempUpdateBroadcast);
+        } else {
+            if (lastUpdateBroadcast == null) {
+                lastUpdateBroadcast = new Intent(SERVICE_UPDATE_NAME);
+                lastUpdateBroadcast.putExtra(EXTRA_IS_PLAYING, false);
+                getApplicationContext().sendStickyBroadcast(lastUpdateBroadcast);
+            }
+        }
     }
 
 
     //Play the current track
     synchronized private void play() {
-        if (!isPrepared || mModel.getCurrentTrack() == null) {
+        if (!isPrepared || mCurrentTrack == null) {
             Log.e(LOG_TAG, "play - not prepared");
             return;
         }
-        Log.d(LOG_TAG, "play " + mModel.getCurrentTrack().getTrackName());
-
+        Log.d(LOG_TAG, "play " + mCurrentTrack.getTrackName());
 
         mp.start();
         mediaPlayerHasStarted = true;
-
-        //presentPlayingNotification();
-
-        // Change broadcasts are sticky, so when a new receiver connects, it will
-        // have the data without polling.
-
-        if (lastChangeBroadcast != null) {
-            getApplicationContext().removeStickyBroadcast(lastChangeBroadcast);
-        }
-        lastChangeBroadcast = new Intent(SERVICE_CHANGE_NAME);
-        lastChangeBroadcast.putExtra(CURRENT_TRACK, mModel.getCurrentTrack());
-        getApplicationContext().sendStickyBroadcast(lastChangeBroadcast);
-
     }
+
 
 
     // Play previous track
     synchronized private void previous(){
-        if(mModel.getCurrentSongIndex() > 0){
-            int currentSongIndex = mModel.getCurrentSongIndex() - 1;
+        if(mCurrentTrackIndex > 0){
+            int currentSongIndex = mCurrentTrackIndex - 1;
+            mCurrentTrackIndex=currentSongIndex;
             mModel.setCurrentSongIndex(currentSongIndex);
         }else{
-            mModel.setCurrentSongIndex(mModel.getTrackList().size() - 1);
+            mModel.setCurrentSongIndex(mListTracks.size() - 1);
         }
-        playCurrent(0, 1);
+        playCurrent();
 
         //Todo update NowPlaying Screen
     }
@@ -521,32 +539,55 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     //Play next song
     synchronized private void next(){
         // check if next song is there or not
-        if(mModel.getCurrentSongIndex() < (mModel.getTrackList().size() - 1)){
-            int currentSongIndex = mModel.getCurrentSongIndex() + 1;
-            mModel.setCurrentSongIndex(currentSongIndex);
+        if(mCurrentTrackIndex < (mListTracks.size() - 1)){
+            int currentSongIndex = mCurrentTrackIndex + 1;
+            mCurrentTrackIndex=currentSongIndex;
+            mModel.setCurrentSongIndex(mCurrentTrackIndex);
 
         }else{
             // play first song
             mModel.setCurrentSongIndex(0);
+            mCurrentTrackIndex=0;
+            mModel.setCurrentSongIndex(mCurrentTrackIndex);
         }
-        playCurrent(0,1);
-        //Todo update NowPlaying Screen
+
+        //Play the current song
+        playCurrent();
     }
 
-    //Play/Pause the track
+    //Send  a broacast to the Now playing screen to update the play/Pause button
+    private void updateUI(){
+        Log.d(LOG_TAG, "updateUI");
+        Intent uiIntent = new Intent(SERVICE_UPDATE_UI);
+        getApplicationContext().sendBroadcast(uiIntent);
+    }
+
+    //Send  a broacast to the Now playing screen to update the play/Pause button
+    private void updatePlayPauseButton(){
+        Log.d(LOG_TAG, "updatePlayPauseButton");
+        Intent playPauseIntent = new Intent(SERVICE_UPDATE_PLAY_PAUSE);
+        getApplicationContext().sendBroadcast(playPauseIntent);
+    }
+
+    //Send a broadcast to the NowPlaying screen to update the seekbar
+    private void updateProgressBar(){
+
+    }
+
+    //Play/Pause the current track
     synchronized private void playPause(){
         // check for already playing
         if (mp!=null) {
             if (mp.isPlaying()) {
                 Log.d(LOG_TAG,"Pausing the media player");
                 mp.pause();
-                //TODO reset playPause button
             }
             else{
                 Log.d(LOG_TAG,"Resume the media player");
                 mp.start();
-                //TODO reset playPause button
             }
+            //Update play pause buttons in the now playing screen
+            updatePlayPauseButton();
         }
     }
 
@@ -554,15 +595,19 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     //Backward the current track
     synchronized private void backward(){
         Log.d(LOG_TAG,"backward the media player");
-        // get current song position
-        int currentPosition = mp.getCurrentPosition();
-        // check if seekBackward time is greater than 0 sec
-        if (currentPosition - seekBackwardTime >= 0){
-            // forward song
-            mp.seekTo(currentPosition - seekBackwardTime);
-        }else{
-            // backward to starting position
-            mp.seekTo(0);
+
+        //Todo updateProgressBar
+        if (mp!=null){
+            // get current song position
+            int currentPosition = mp.getCurrentPosition();
+            // check if seekBackward time is greater than 0 sec
+            if (currentPosition - seekBackwardTime >= 0){
+                // forward song
+                seekTo(currentPosition - seekBackwardTime);
+            }else{
+                // backward to starting position
+                seekTo(0);
+            }
         }
     }
 
@@ -570,18 +615,20 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     //Forward the current track
     synchronized private void forward(){
         Log.d(LOG_TAG,"forward the media player");
-        // get current song position
-        int currentPosition = mp.getCurrentPosition();
-        // check if seekForward time is lesser than song duration
-        if (currentPosition + seekForwardTime <= mp.getDuration()) {
-            // forward song
-            mp.seekTo(currentPosition + seekForwardTime);
-        } else {
-            // forward to end position
-            mp.seekTo(mp.getDuration());
+
+        if(mp!=null){
+            // get current song position
+            int currentPosition = mp.getCurrentPosition();
+            // check if seekForward time is lesser than song duration
+            if (currentPosition + seekForwardTime <= mp.getDuration()) {
+                // forward song
+                seekTo(currentPosition + seekForwardTime);
+            } else {
+                // forward to end position
+                seekTo(mp.getDuration());
+            }
         }
     }
-
 
     //Repeat the track
     synchronized private void repeat(){
@@ -598,7 +645,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //Shuffle the current track
     synchronized private void shuffle(){
-        if(mModel.isShuffle()){
+        if(mModel.isShuffle()) {
             mModel.setShuffle(false);
 
             L.toast(getApplicationContext(), getResources().getString(R.string.shuffle_off));
@@ -613,9 +660,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //Seekto the pos millisecond
     synchronized private void seekTo(int pos) {
+        Log.d(LOG_TAG,"Seek to position: "+pos);
         if (isPrepared) {
             seekToPosition = 0;
             mp.seekTo(pos);
+            updateProgress();
         }
     }
 
@@ -627,15 +676,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         return 0;
     }
 
-    private void incrementErrorCount() {
-        errorCount++;
-        Log.e(LOG_TAG, "Media player increment error count:" + errorCount);
-        if (errorCount >= ERROR_RETRY_COUNT) {
-            Intent intent = new Intent(SERVICE_ERROR_NAME);
-            intent.putExtra(EXTRA_ERROR, PLAYBACK_SERVICE_ERROR.Playback.ordinal());
-            getApplicationContext().sendBroadcast(intent);
-        }
-    }
 
     private void handleConnectionError() {
         connectionErrorWaitTime *= 5;
@@ -644,7 +684,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                     " and trying again in 30 seconds.");
 
             Intent intent = new Intent(SERVICE_ERROR_NAME);
-            intent.putExtra(EXTRA_ERROR, PLAYBACK_SERVICE_ERROR.Connection.ordinal());
+            intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.Connection.ordinal());
             getApplicationContext().sendBroadcast(intent);
 
             connectionErrorWaitTime = RETRY_SLEEP_TIME;

@@ -3,6 +3,7 @@ package com.princecoder.nanodegree.spotifytreamer;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
@@ -96,24 +97,70 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
     //Utilities
     private Utilities utils;
-    //My Tracks
-    private TrackModel mTrack=new TrackModel();
+
+    //My Current Tracks
+    private TrackModel mCurrentTrack =new TrackModel();
+
+    private int mCurrentTrackIndex;
 
     //List of tracks
     private ArrayList<TrackModel>mListTracks=new ArrayList<>();
 
+    //List of tracks tag
     public static final String LIST_TRACKS="LIST_TRACKS";
 
+    //Track index tag
     public static final String TRACK_INDEX="TRACK_INDEX";
 
+    //Broadcast receiver
+    private BroadcastReceiver updateUIReceiver;
 
+    private BroadcastReceiver errorReceiver;
+
+    private BroadcastReceiver playPauseReceiver;
+
+    //Intent received
+    private String receivedIntent;
+
+    // Intent
+    private Intent mIntent;
+
+    // Play/Pause Tag use to send a message to the service that we pressed the Play/Pause button
+    public static String PLAY_PAUSE="RESET_PLAY_PAUSE";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
     }
 
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        //Register the broadcast receiver
+        updateUIReceiver = new MediaPlayerUpdateUIReceiver();
+        errorReceiver=new MediaPlayerErrorReceiver();
+        playPauseReceiver=new MediaPlayerPlayPauseReceiver();
+
+        mIntent = getActivity().registerReceiver(updateUIReceiver,
+                new IntentFilter(MediaPlayerService.SERVICE_UPDATE_UI));
+        if (mIntent != null) {
+            updateUIReceiver.onReceive(getActivity(), mIntent);
+        }
+
+        mIntent = getActivity().registerReceiver(playPauseReceiver,
+                new IntentFilter(MediaPlayerService.SERVICE_UPDATE_PLAY_PAUSE));
+        if (mIntent != null) {
+            playPauseReceiver.onReceive(getActivity(), mIntent);
+        }
+        mIntent =getActivity().registerReceiver(errorReceiver,
+                new IntentFilter(MediaPlayerService.SERVICE_ERROR_NAME));
+
+        if (mIntent != null) {
+            errorReceiver.onReceive(getActivity(), mIntent);
+        }
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -139,152 +186,142 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         songThumb=(ImageView)rootView.findViewById(R.id.trackThumbnail);
         loadingIndicator = (ProgressBar) rootView.findViewById(R.id.player_loading_indicator);
 
-        // The model
-        mModel=MediaModel.getInstance();
+        //OnclickListener
+        btnPlayPause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performAction(v);
+            }
+        });
 
-        //Make sure I have the same Media player
-        mp = mModel.getMediaPlayer();
+        btnForward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performAction(v);
+            }
+        });
 
-        utils = new Utilities();
+        btnBackward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performAction(v);
+            }
+        });
 
-        // Listeners
-        songProgressBar.setOnSeekBarChangeListener(this); // Important
-       // mp.setOnCompletionListener(this); // Important
+        btnPlayPause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performAction(v);
+            }
+        });
 
-        if(savedInstanceState==null){
+        btnNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performAction(v);
+            }
+        });
+
+        btnPrevious.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performAction(v);
+            }
+        });
+
+        btnRepeat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performAction(v);
+            }
+        });
+
+        btnShuffle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performAction(v);
+            }
+        });
+
+        //Init Media player values
+        init();
+
+
+        if(savedInstanceState==null){ // First time we open the view
             //Receive data from last fragment
             Bundle args=getArguments();
 
             if(args!=null){
                 // I retreive the informations
                 mListTracks=(ArrayList<TrackModel>)args.getSerializable(LIST_TRACKS);
+
                 mModel.setTrackList(mListTracks);
 
                 //get the selected track index and save it in the model
                 mModel.setCurrentSongIndex(args.getInt(TRACK_INDEX));
 
                 // current track
-                mTrack = mListTracks.get(mModel.getCurrentSongIndex());
-                mModel.setCurrentTrack(mTrack);
+                mCurrentTrack = mListTracks.get(mModel.getCurrentTrackIndex());
+
+                mModel.setCurrentTrack(mCurrentTrack);
             }
-            startPlayer();
+
+            //Start playing the selected track
+            startSelectedTrack();
         }
-        else{
-            //Update the thumbnail
-            updateUI(mModel.getCurrentSongIndex());
+        else{ // We just came back into the view
+
+            //Update UI elements
+            updateUI(mCurrentTrackIndex);
 
             //Update the progress bar
             updateProgressBar();
         }
 
-        /**
-         * Play button click event
-         * plays a song and changes button to pause image
-         * pauses a song and changes button to play image
-         * */
-        btnPlayPause.setOnClickListener(btnPlayPauseListener);
-
-        /**
-         * Forward button click event
-         * Forwards song specified seconds
-         * */
-        btnForward.setOnClickListener(btnForwardListener);
-
-        /**
-         * Backward button click event
-         * Backward song to specified seconds
-         * */
-        btnBackward.setOnClickListener(btnBackwardListener);
-
-
-        /**
-         * Next button click event
-         * Plays next song by taking currentSongIndex + 1
-         * */
-        btnNext.setOnClickListener(btnNextListener);
-
-        /**
-         * Back button click event
-         * Plays previous song by currentSongIndex - 1
-         * */
-        btnPrevious.setOnClickListener(btnPreviousListener);
-
-        /**
-         * Button Click event for Repeat button
-         * Enables repeat flag to true
-         * */
-        btnRepeat.setOnClickListener(btnRepeatListener);
-
-        /**
-         * Button Click event for Shuffle button
-         * Enables shuffle flag to true
-         * */
-        btnShuffle.setOnClickListener(btnShuffleListener);
-
         return rootView;
 
     }
 
-    //Listeners
+    //Initialize The Media player values
+    private void init() {
+        // The model
+        mModel= MediaModel.getInstance();
 
-    View.OnClickListener btnForwardListener= new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            performAction(v);
-        }
-    };
-    View.OnClickListener btnBackwardListener=new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            performAction(v);
-        }
-    };
-    View.OnClickListener btnNextListener=new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            performAction(v);
-        }
-    };
-    View.OnClickListener btnPreviousListener=new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            performAction(v);
-        }
-    };
-    View.OnClickListener btnRepeatListener=new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            performAction(v);
-        }
-    };
-    View.OnClickListener btnShuffleListener=new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            performAction(v);
-        }
-    };
-    View.OnClickListener btnPlayPauseListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            performAction(v);
-        }
-    };
+        //Make sure I have the same Media player
+        mp = mModel.getMediaPlayer();
+
+        utils = new Utilities();
+
+        //Get the current track
+        mCurrentTrack =mModel.getCurrentTrack();
+
+        //get the current track index
+        mCurrentTrackIndex=mModel.getCurrentTrackIndex();
+
+        //Get the list of tracks
+        mListTracks=mModel.getTrackList();
+
+        // Listeners
+        songProgressBar.setOnSeekBarChangeListener(this);
+    }
 
 
     //Reset the playPause button
     private void resetPlayPauseButton(){
-        if(mp.isPlaying())
-            btnPlayPause.setImageResource(R.drawable.btn_pause);
-        else
-            btnPlayPause.setImageResource(R.drawable.btn_play);
+        if(mp!=null){
+            if(mp.isPlaying())
+                btnPlayPause.setImageResource(R.drawable.btn_pause);
+            else
+                btnPlayPause.setImageResource(R.drawable.btn_play);
+        }
     }
 
 
     //Update UI elements
     private void updateUI(int songIndex) {
-
         //Reset the playPause button
         resetPlayPauseButton();
+
         // Displaying Song title
         String songTitle = mListTracks.get(songIndex).getTrackName();
         String songAlbum=mListTracks.get(songIndex).getAlbum();
@@ -296,9 +333,8 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
         //Set the thumb image
         if(mListTracks.get(songIndex).getThumb()!=null)
-        new LoadThumbImage().execute(mListTracks.get(songIndex).getThumb());
+            new LoadThumbImage().execute(mListTracks.get(songIndex).getThumb());
     }
-
 
 
     @Override
@@ -307,81 +343,43 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     }
 
     //Start the MediaPlayer
-    private void startPlayer(){
+    private void startSelectedTrack(){
         Intent intent=new Intent(getActivity(),MediaPlayerService.class);
-        intent.setAction(MediaPlayerService.MEDIASERVICE_START_PLAYER);
-        //I pass tracks to the intent
-        intent.putExtra(MediaPlayerService.TRACKS_LIST, mListTracks);
-        intent.putExtra(MediaPlayerService.CURRENT_TRACK, mTrack);
+        intent.setAction(MediaPlayerService.MEDIASERVICE_START_START_SELECTED_TRACK);
+        //Send an intent we're about to play the selected track
         getActivity().startService(intent);
     }
 
-    //Sent an action to the service
-
+    //Send an action to the service
     private void performAction(View v){
-        Intent intent=new Intent(getActivity(),MediaPlayerService.class);
+        mIntent=new Intent(getActivity(),MediaPlayerService.class);
         switch (v.getId()){
             case R.id.btnPlay:
-                intent.setAction(MediaPlayerService.MEDIASERVICE_PLAYPAUSE);
+                mIntent.setAction(MediaPlayerService.MEDIASERVICE_PLAYPAUSE);
                 break;
             case R.id.btnBackward:
-                intent.setAction(MediaPlayerService.MEDIASERVICE_BACKWARD);
+                mIntent.setAction(MediaPlayerService.MEDIASERVICE_BACKWARD);
                 break;
             case R.id.btnForward:
-                intent.setAction(MediaPlayerService.MEDIASERVICE_FORWARD);
+                mIntent.setAction(MediaPlayerService.MEDIASERVICE_FORWARD);
                 break;
             case R.id.btnNext:
-                intent.setAction(MediaPlayerService.MEDIASERVICE_NEXT);
+                mIntent.setAction(MediaPlayerService.MEDIASERVICE_NEXT);
                 break;
             case R.id.btnPrevious:
-                intent.setAction(MediaPlayerService.MEDIASERVICE_PREVIOUS);
+                mIntent.setAction(MediaPlayerService.MEDIASERVICE_PREVIOUS);
                 break;
             case R.id.btnRepeat:
-                intent.setAction(MediaPlayerService.MEDIASERVICE_REPEAT);
+                mIntent.setAction(MediaPlayerService.MEDIASERVICE_REPEAT);
                 break;
             case R.id.btnShuffle:
-                intent.setAction(MediaPlayerService.MEDIASERVICE_SHUFFLE);
+                mIntent.setAction(MediaPlayerService.MEDIASERVICE_SHUFFLE);
                 break;
         }
-        getActivity().startService(intent);
+
+        //Send intent via then startService Method
+        getActivity().startService(mIntent);
     }
-
-
-
-    /**
-     * Update timer on seekbar
-     * */
-    public void updateProgressBar() {
-        mHandler.postDelayed(mUpdateTimeTask, 100);
-    }
-
-    /**
-     * Background Runnable thread
-     * */
-    private Runnable mUpdateTimeTask = new Runnable() {
-        public void run() {
-            try {
-                long totalDuration = mp.getDuration();
-                long currentDuration = mp.getCurrentPosition();
-
-                // Displaying Total Duration time
-                songTotalDurationLabel.setText(""+utils.milliSecondsToTimer(totalDuration));
-                // Displaying time completed playing
-                songCurrentDurationLabel.setText(""+utils.milliSecondsToTimer(currentDuration));
-
-                // Updating progress bar
-                int progress = utils.getProgressPercentage(currentDuration, totalDuration);
-                //Log.d("Progress", ""+progress);
-                songProgressBar.setProgress(progress);
-
-                // Running this thread after 100 milliseconds
-                mHandler.postDelayed(this, 100);
-            } catch (IllegalStateException e) {
-//                e.printStackTrace();
-                L.m(LOG_TAG,e.getMessage());
-            }
-        }
-    };
 
 
     @Override
@@ -390,6 +388,32 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         setRetainInstance(true);
     }
 
+
+
+    /**
+     * Update timer on seekbar
+     * */
+    public void updateProgressBar() {
+//        mHandler.postDelayed(mUpdateTimeTask, 100);
+
+        if(mp!=null){
+            long totalDuration = mp.getDuration();
+            long currentDuration = mp.getCurrentPosition();
+
+            // Displaying Total Duration time
+            songTotalDurationLabel.setText(""+utils.milliSecondsToTimer(totalDuration));
+            // Displaying time completed playing
+            songCurrentDurationLabel.setText(""+utils.milliSecondsToTimer(currentDuration));
+
+            // Updating progress bar
+            int progress = (int)(utils.getProgressPercentage(currentDuration, totalDuration));
+            //Log.d("Progress", ""+progress);
+            songProgressBar.setProgress(progress);
+
+            // Running this thread after 100 milliseconds
+            //mHandler.postDelayed(this, 100);
+        }
+    }
 
 
     /**
@@ -405,8 +429,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
      * */
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-        // remove message Handler from updating progress bar
-        mHandler.removeCallbacks(mUpdateTimeTask);
+
     }
 
     /**
@@ -414,15 +437,15 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
      * */
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        mHandler.removeCallbacks(mUpdateTimeTask);
+
         int totalDuration = mp.getDuration();
         int currentPosition = utils.progressToTimer(seekBar.getProgress(), totalDuration);
 
-        // forward or backward to certain seconds
-        mp.seekTo(currentPosition);
+        // We sent the event to the service
+        mIntent.setAction(MediaPlayerService.MEDIASERVICE_SEEK_TO);
+        mIntent.putExtra(MediaPlayerService.CURRENT_POSITION,currentPosition);
+        getActivity().startService(mIntent);
 
-        // update timer progress again
-        updateProgressBar();
     }
 
 
@@ -432,15 +455,15 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
         @Override
         protected Bitmap doInBackground(String... params) {
-            URL myurl;
+            URL myUrl;
             Bitmap bm=null;
 
             try {
-                myurl = new URL(params[0]);
-                URLConnection con=myurl.openConnection();
+                myUrl = new URL(params[0]);
+                URLConnection con=myUrl.openConnection();
                 bm=BitmapFactory.decodeStream(con.getInputStream());
             }  catch (IOException e) {
-               // e.printStackTrace();
+                // e.printStackTrace();
                 L.m(LOG_TAG,e.getMessage());
             }
             return bm;
@@ -456,24 +479,44 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
     // Receivers
 
-    private class PlaybackErrorReceiver extends BroadcastReceiver {
+    private class MediaPlayerErrorReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(LOG_TAG, "Playback error received - toasting message");
             String message = context.getString(R.string.msg_unknown_error);
-
-            int error = intent.getIntExtra(MediaPlayerService.EXTRA_ERROR, -1);
-            if (error == MediaPlayerService.PLAYBACK_SERVICE_ERROR.Playback.ordinal()) {
-                message = context.getString(R.string.msg_playback_error);
-            } else if (error == MediaPlayerService.PLAYBACK_SERVICE_ERROR.Connection.ordinal()) {
-                message = context.getString(R.string.msg_playback_connection_error);
-            } else if (error == MediaPlayerService.PLAYBACK_SERVICE_ERROR.InvalidPlayable.ordinal()) {
-                message = context.getString(R.string.msg_playback_invalid_playable_error);
-
-                //TODO Do something
-            }
             Toast.makeText(context, message, Toast.LENGTH_LONG).show();
         }
     }
 
+
+
+    private class MediaPlayerUpdateUIReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent!=null){
+                updateUI(mModel.getCurrentTrackIndex());
+            }
+        }
+    }
+
+
+
+    private class MediaPlayerPlayPauseReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent!=null){
+               resetPlayPauseButton();
+            }
+        }
+    }
+
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        //Unregister the receivers
+        getActivity().unregisterReceiver(updateUIReceiver);
+        getActivity().unregisterReceiver(errorReceiver);
+        getActivity().unregisterReceiver(playPauseReceiver);
+    }
 }

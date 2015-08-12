@@ -83,8 +83,10 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
         NowPlayingFragment fragment=new NowPlayingFragment();
         fragment.setArguments(args);
 
-        transaction.add(R.id.trackContainer, fragment)
-                .addToBackStack(null).commit();
+        fragment.show(getSupportFragmentManager(), "now playing");
+
+//        transaction.add(R.id.trackContainer, fragment)
+//                .addToBackStack(null).commit();
     }
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override

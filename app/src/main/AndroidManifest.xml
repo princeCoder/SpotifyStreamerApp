@@ -30,6 +30,7 @@
         <activity
             android:name=".TrackActivity"
             android:parentActivityName=".HomeActivity"
+            android:configChanges="orientation|screenSize"
             android:label="@string/title_activity_track" >
         </activity>
 
