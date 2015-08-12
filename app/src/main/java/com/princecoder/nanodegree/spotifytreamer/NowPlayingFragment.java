@@ -495,6 +495,9 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
             // forward or backward to certain seconds
             mp.seekTo(currentPosition);
+
+            //update the progress bar
+            updateProgressBar();
         }
     }
 
