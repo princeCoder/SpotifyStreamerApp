@@ -109,7 +109,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     public static final String SERVICE_ERROR_NAME = "SERVICE_ERROR_NAME";
     public static final String SERVICE_CLOSE_NAME = "CLOSE";
-    public static final String SERVICE_UPDATE_NAME = "UPDATE";
+    public static final String SERVICE_UPDATE_PROGRESS_BAR_START = "SERVICE_UPDATE_PROGRESS_BAR_START";
+    public static final String SERVICE_UPDATE_PROGRESS_BAR_STOP = "SERVICE_UPDATE_PROGRESS_BAR_STOP";
     public static final String SERVICE_UPDATE_PLAY_PAUSE="SERVICE_UPDATE_PLAY_PAUSE";
     public static final String SERVICE_UPDATE_UI="SERVICE_UPDATE_UI";
     public static final String EXTRA_IS_PLAYING = "EXTRA_IS_PLAYING";
@@ -360,6 +361,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (isPrepared) {
             isPrepared = false;
             mp.stop();
+            // Send a broadcast to the Now Playing to stop the handler
+            StopProgressBar();
         }
     }
 
@@ -455,56 +458,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         play();
         //Update UI Elements
         updateUI();
-        //Todo update the progress bar
-
-
-    }
-
-
-    /**
-     * Background Runnable thread
-     * */
-    private Runnable mUpdateTask = new Runnable() {
-        public void run() {
-            updateProgress();
-        }
-    };
-
-
-
-
-    /**
-     * Sends an UPDATE broadcast with the latest info.
-     */
-    private void updateProgress() {
-        Log.d(LOG_TAG, "UpdateProgress");
-
-        // Stop updating after mediaplayer is released
-        if (mp == null)
-            return;
-
-        if (isPrepared) {
-
-            if (lastUpdateBroadcast != null) {
-                getApplicationContext().removeStickyBroadcast(lastUpdateBroadcast);
-                lastUpdateBroadcast = null;
-            }
-
-            seekToPosition = mp.getCurrentPosition();
-
-
-            Intent tempUpdateBroadcast = new Intent(SERVICE_UPDATE_NAME);
-
-            // Update broadcasts while playing are not sticky, due to concurrency
-            // issues.  These fire very often, so this shouldn't be a problem.
-            getApplicationContext().sendBroadcast(tempUpdateBroadcast);
-        } else {
-            if (lastUpdateBroadcast == null) {
-                lastUpdateBroadcast = new Intent(SERVICE_UPDATE_NAME);
-                lastUpdateBroadcast.putExtra(EXTRA_IS_PLAYING, false);
-                getApplicationContext().sendStickyBroadcast(lastUpdateBroadcast);
-            }
-        }
+        StartProgressBar();
     }
 
 
@@ -569,10 +523,21 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         getApplicationContext().sendBroadcast(playPauseIntent);
     }
 
-    //Send a broadcast to the NowPlaying screen to update the seekbar
-    private void updateProgressBar(){
-
+    //Send a broadcast to the NowPlaying screen to start the seekbar
+    private void StartProgressBar(){
+        Log.d(LOG_TAG, "start progressBar");
+        Intent progressBarIntent = new Intent(SERVICE_UPDATE_PROGRESS_BAR_START);
+        getApplicationContext().sendBroadcast(progressBarIntent);
     }
+
+
+    //Send a broadcast to the NowPlaying screen to stop the seekbar
+    private void StopProgressBar(){
+        Log.d(LOG_TAG, "Stop ProgresBar");
+        Intent progressBarIntent = new Intent(SERVICE_UPDATE_PROGRESS_BAR_STOP);
+        getApplicationContext().sendBroadcast(progressBarIntent);
+    }
+
 
     //Play/Pause the current track
     synchronized private void playPause(){
@@ -664,7 +629,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (isPrepared) {
             seekToPosition = 0;
             mp.seekTo(pos);
-            updateProgress();
+            StartProgressBar();
         }
     }
 

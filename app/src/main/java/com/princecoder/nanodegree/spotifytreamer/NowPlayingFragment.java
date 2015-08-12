@@ -115,6 +115,10 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     //Broadcast receiver
     private BroadcastReceiver updateUIReceiver;
 
+    private BroadcastReceiver progressBarStartReceiver;
+
+    private BroadcastReceiver progressBarStopReceiver;
+
     private BroadcastReceiver errorReceiver;
 
     private BroadcastReceiver playPauseReceiver;
@@ -134,32 +138,64 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     }
 
 
+    private void updateUIBroadcast(){
+        Intent intent = getActivity().registerReceiver(updateUIReceiver,
+                new IntentFilter(MediaPlayerService.SERVICE_UPDATE_UI));
+        if (intent != null) {
+            updateUIReceiver.onReceive(getActivity(), mIntent);
+        }
+    }
+
+    private void progressBarStartBroadcast(){
+        Intent intent = getActivity().registerReceiver(progressBarStartReceiver,
+                new IntentFilter(MediaPlayerService.SERVICE_UPDATE_PROGRESS_BAR_START));
+        if (intent != null) {
+            progressBarStartReceiver.onReceive(getActivity(), intent);
+        }
+    }
+
+    private void progressBarStopBroadcast(){
+        Intent intent = getActivity().registerReceiver(progressBarStopReceiver,
+                new IntentFilter(MediaPlayerService.SERVICE_UPDATE_PROGRESS_BAR_STOP));
+        if (intent != null) {
+            progressBarStopReceiver.onReceive(getActivity(), intent);
+        }
+    }
+
+    private void playPauseBroadcast(){
+        Intent intent = getActivity().registerReceiver(playPauseReceiver,
+                new IntentFilter(MediaPlayerService.SERVICE_UPDATE_PLAY_PAUSE));
+        if (intent != null) {
+            playPauseReceiver.onReceive(getActivity(), intent);
+        }
+    }
+
+
+    private void errorBroadcast(){
+        Intent intent =getActivity().registerReceiver(errorReceiver,
+                new IntentFilter(MediaPlayerService.SERVICE_ERROR_NAME));
+        if (intent != null) {
+            errorReceiver.onReceive(getActivity(), intent);
+        }
+    }
+
     @Override
     public void onStart() {
         super.onStart();
 
         //Register the broadcast receiver
         updateUIReceiver = new MediaPlayerUpdateUIReceiver();
+        progressBarStartReceiver = new MediaPlayerProgressBarStartReceiver();
+        progressBarStopReceiver = new MediaPlayerProgressBarStopReceiver();
         errorReceiver=new MediaPlayerErrorReceiver();
         playPauseReceiver=new MediaPlayerPlayPauseReceiver();
 
-        mIntent = getActivity().registerReceiver(updateUIReceiver,
-                new IntentFilter(MediaPlayerService.SERVICE_UPDATE_UI));
-        if (mIntent != null) {
-            updateUIReceiver.onReceive(getActivity(), mIntent);
-        }
+        errorBroadcast();
+        playPauseBroadcast();
+        updateUIBroadcast();
+        progressBarStartBroadcast();
+        progressBarStopBroadcast();
 
-        mIntent = getActivity().registerReceiver(playPauseReceiver,
-                new IntentFilter(MediaPlayerService.SERVICE_UPDATE_PLAY_PAUSE));
-        if (mIntent != null) {
-            playPauseReceiver.onReceive(getActivity(), mIntent);
-        }
-        mIntent =getActivity().registerReceiver(errorReceiver,
-                new IntentFilter(MediaPlayerService.SERVICE_ERROR_NAME));
-
-        if (mIntent != null) {
-            errorReceiver.onReceive(getActivity(), mIntent);
-        }
     }
 
     @Override
@@ -268,6 +304,9 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
             //Start playing the selected track
             startSelectedTrack();
+
+            // Update progress bar
+            //updateProgressBar();
         }
         else{ // We just came back into the view
 
@@ -394,26 +433,37 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
      * Update timer on seekbar
      * */
     public void updateProgressBar() {
-//        mHandler.postDelayed(mUpdateTimeTask, 100);
+        Log.d(LOG_TAG, "updateProgressBar()");
+        mHandler.postDelayed(mUpdateTimeTask, 100);
 
-        if(mp!=null){
-            long totalDuration = mp.getDuration();
-            long currentDuration = mp.getCurrentPosition();
-
-            // Displaying Total Duration time
-            songTotalDurationLabel.setText(""+utils.milliSecondsToTimer(totalDuration));
-            // Displaying time completed playing
-            songCurrentDurationLabel.setText(""+utils.milliSecondsToTimer(currentDuration));
-
-            // Updating progress bar
-            int progress = (int)(utils.getProgressPercentage(currentDuration, totalDuration));
-            //Log.d("Progress", ""+progress);
-            songProgressBar.setProgress(progress);
-
-            // Running this thread after 100 milliseconds
-            //mHandler.postDelayed(this, 100);
-        }
     }
+
+    /**
+     * Background Runnable thread
+     * */
+    private Runnable mUpdateTimeTask = new Runnable() {
+        public void run() {
+            Log.d(LOG_TAG,"mUpdateTimeTask");
+            if(mp!=null){
+
+                long totalDuration = mp.getDuration();
+                long currentDuration = mp.getCurrentPosition();
+
+                // Displaying Total Duration time
+                songTotalDurationLabel.setText(""+utils.milliSecondsToTimer(totalDuration));
+                // Displaying time completed playing
+                songCurrentDurationLabel.setText(""+utils.milliSecondsToTimer(currentDuration));
+
+                // Updating progress bar
+                int progress = (int)(utils.getProgressPercentage(currentDuration, totalDuration));
+                //Log.d("Progress", ""+progress);
+                songProgressBar.setProgress(progress);
+
+                // Running this thread after 100 milliseconds
+                mHandler.postDelayed(this, 100);
+            }
+        }
+    };
 
 
     /**
@@ -429,7 +479,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
      * */
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-
+        mHandler.removeCallbacks(mUpdateTimeTask);
     }
 
     /**
@@ -437,15 +487,15 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
      * */
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
+        if(mp!=null){
 
-        int totalDuration = mp.getDuration();
-        int currentPosition = utils.progressToTimer(seekBar.getProgress(), totalDuration);
+            mHandler.removeCallbacks(mUpdateTimeTask);
+            int totalDuration = mp.getDuration();
+            int currentPosition = utils.progressToTimer(seekBar.getProgress(), totalDuration);
 
-        // We sent the event to the service
-        mIntent.setAction(MediaPlayerService.MEDIASERVICE_SEEK_TO);
-        mIntent.putExtra(MediaPlayerService.CURRENT_POSITION,currentPosition);
-        getActivity().startService(mIntent);
-
+            // forward or backward to certain seconds
+            mp.seekTo(currentPosition);
+        }
     }
 
 
@@ -510,6 +560,27 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         }
     }
 
+    private class MediaPlayerProgressBarStartReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent!=null){
+                // set Progress bar values
+                updateProgressBar();
+            }
+        }
+    }
+
+    private class MediaPlayerProgressBarStopReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent!=null){
+                if(mHandler!=null){
+                    mHandler.removeCallbacks(mUpdateTimeTask);
+                }
+            }
+        }
+    }
+
 
     @Override
     public void onStop() {
@@ -518,5 +589,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         getActivity().unregisterReceiver(updateUIReceiver);
         getActivity().unregisterReceiver(errorReceiver);
         getActivity().unregisterReceiver(playPauseReceiver);
+        getActivity().unregisterReceiver(progressBarStartReceiver);
+        getActivity().unregisterReceiver(progressBarStopReceiver);
     }
 }
