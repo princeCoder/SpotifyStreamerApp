@@ -5,7 +5,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 /**
- * Created by prinzlyngotoum on 7/1/15.
+ * Created by Prinzly Ngotoum on 7/1/15.
  */
 public class L {
     /**

@@ -10,7 +10,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
-import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -46,13 +45,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     // Media Model
     private MediaModel mModel;
 
-    //List of tracks tag
-    public static final String TRACKS_LIST="TRACKS_LIST";
-
-    //Current track tag
-    public static final String CURRENT_TRACK="CURRENT_TRACK";
-
-
     //My Current Tracks
     private TrackModel mCurrentTrack =new TrackModel();
 
@@ -68,12 +60,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     // to reset or release it.
     private boolean mediaPlayerHasStarted = false;
 
-    private int startId;
-
-    // Error handling
-    private int connectionErrorWaitTime;
-    private int seekToPosition;
-
     private TelephonyManager telephonyManager;
     private PhoneStateListener listener;
     private boolean isPausedInCall = false;
@@ -81,18 +67,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     // Amount of time to rewind playback when resuming after call
     private final static int RESUME_REWIND_TIME = 3000;
-    private final static int RETRY_SLEEP_TIME = 30000;
 
     private int seekForwardTime = 5000; // 5000 milliseconds
     private int seekBackwardTime = 5000; // 5000 milliseconds
 
-    private int lastBufferPercent = 0;
-
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
-
-    private Intent lastChangeBroadcast;
-    private Intent lastUpdateBroadcast;
 
     public static final String CURRENT_POSITION="CURRENT_POSITION";
 
@@ -106,17 +86,15 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public static final String MEDIASERVICE_FORWARD="MEDIASERVICE_FORWARD";
     public static final String MEDIASERVICE_REPEAT="MEDIASERVICE_REPEAT";
     public static final String MEDIASERVICE_SHUFFLE="MEDIASERVICE_SHUFFLE";
-
     public static final String SERVICE_ERROR_NAME = "SERVICE_ERROR_NAME";
     public static final String SERVICE_CLOSE_NAME = "CLOSE";
     public static final String SERVICE_UPDATE_PROGRESS_BAR_START = "SERVICE_UPDATE_PROGRESS_BAR_START";
     public static final String SERVICE_UPDATE_PROGRESS_BAR_STOP = "SERVICE_UPDATE_PROGRESS_BAR_STOP";
     public static final String SERVICE_UPDATE_PLAY_PAUSE="SERVICE_UPDATE_PLAY_PAUSE";
     public static final String SERVICE_UPDATE_UI="SERVICE_UPDATE_UI";
-    public static final String EXTRA_IS_PLAYING = "EXTRA_IS_PLAYING";
     public static final String EXTRA_ERROR = "EXTRA_ERROR";
 
-    public enum MEDIAPLAYER_SERVICE_ERROR {Connection, MediaPlayer, InvalidTrack}
+    public enum MEDIAPLAYER_SERVICE_ERROR {MediaPlayer, Connection, InvalidTrack}
 
     private String currentAction;
 
@@ -129,7 +107,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
         @Override
         public void handleMessage(Message msg) {
-            startId = msg.arg1;
             onHandleIntent((Intent) msg.obj);
         }
     }
@@ -292,9 +269,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         serviceLooper.quit();
         stopForeground( true );
 
-        if (lastChangeBroadcast != null) {
-            getApplicationContext().removeStickyBroadcast(lastChangeBroadcast);
-        }
         getApplicationContext().sendBroadcast(new Intent(SERVICE_CLOSE_NAME));
 
         telephonyManager.listen(listener, PhoneStateListener.LISTEN_NONE);
@@ -371,7 +345,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         Log.d(LOG_TAG, "Error:  " + what + " " + extra);
-        //Todo I notify the user there is an error
+        handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
         return false;
     }
 
@@ -419,16 +393,38 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 }
             } catch (UnknownHostException e) {
                 Log.w(LOG_TAG, "Unknown host in playCurrent");
-                handleConnectionError();
+                handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
             } catch (ConnectException e) {
                 Log.w(LOG_TAG, "Connect exception in playCurrent");
-                handleConnectionError();
+                handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
             } catch (IOException e) {
                 Log.e(LOG_TAG, "IOException on playlist entry " + mCurrentTrack.getTrackName(), e);
+                handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
             } catch (IllegalStateException e) {
                 Log.e(LOG_TAG, "Illegal state exception trying to play entry " + mCurrentTrack.getTrackName(), e);
+                handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
             }
         return false;
+    }
+
+    /**
+     * Handle errors
+     */
+    private void handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR error) {
+        Intent intent = new Intent(SERVICE_ERROR_NAME);
+        switch (error){
+            case MediaPlayer:
+                intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.MediaPlayer.ordinal());
+                break;
+            case InvalidTrack:
+                intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal());
+                break;
+            case Connection:
+                intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.Connection.ordinal());
+                break;
+        }
+
+        getApplicationContext().sendBroadcast(intent);
     }
 
 
@@ -627,7 +623,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     synchronized private void seekTo(int pos) {
         Log.d(LOG_TAG,"Seek to position: "+pos);
         if (isPrepared) {
-            seekToPosition = 0;
             mp.seekTo(pos);
             StartProgressBar();
         }
@@ -640,28 +635,4 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
         return 0;
     }
-
-
-    private void handleConnectionError() {
-        connectionErrorWaitTime *= 5;
-        if (connectionErrorWaitTime > RETRY_SLEEP_TIME) {
-            Log.e(LOG_TAG, "Connection failed.  Resetting mediaPlayer" +
-                    " and trying again in 30 seconds.");
-
-            Intent intent = new Intent(SERVICE_ERROR_NAME);
-            intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.Connection.ordinal());
-            getApplicationContext().sendBroadcast(intent);
-
-            connectionErrorWaitTime = RETRY_SLEEP_TIME;
-            // Send error notification and keep waiting
-            isPrepared = false;
-            mp.reset();
-        } else {
-            Log.w(LOG_TAG, "Connection error. Waiting for " +
-                    connectionErrorWaitTime + " milliseconds.");
-        }
-        SystemClock.sleep(connectionErrorWaitTime);
-    }
-
-
 }
