@@ -1,14 +1,26 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light">
-        <!-- Customize your theme here. -->
+    <style name="AppTheme" parent="@style/Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+    </style>
+
+    <!-- Main activity theme. -->
+    <style name="SpotifyTheme" parent="AppTheme">
+        <item name="actionBarStyle">@style/ActionBar.Solid.Spotify.NoTitle</item>
+    </style>
+
+    <!-- main activity action bar styles -->
+    <style name="ActionBar.Solid.Spotify.NoTitle" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="displayOptions">showHome|showTitle</item>
+        <item name="logo">@mipmap/ic_launcher</item>
     </style>
 
     <!-- Default card icon -->
     <style name="standard_icon">
-        <item name="android:layout_width">@dimen/standard_icon_width</item>
-        <item name="android:layout_height">@dimen/standard_icon_height</item>
+        <item name="android:layout_width">60dp</item>
+        <item name="android:layout_height">60dp</item>
         <item name="android:scaleType">fitCenter</item>
         <item name="android:layout_margin">5dp</item>
         <item name="android:layout_centerVertical">true</item>
@@ -24,8 +36,8 @@
         <item name="android:maxLines">1</item>
         <item name="android:text">@string/default_content_description</item>
         <item name="android:gravity">left|center_vertical</item>
-        <item name="android:textColor">@color/black</item>
-        <item name="android:textSize">7pt</item>
+        <item name="android:textColor">@color/primary_text</item>
+        <item name="android:textSize">20sp</item>
     </style>
 
     <!--Default card sub text-->
@@ -35,7 +47,7 @@
         <item name="android:layout_marginLeft">10dp</item>
         <item name="android:layout_marginRight">10dp</item>
         <item name="android:layout_marginBottom">5dp</item>
-        <item name="android:textColor">@color/black</item>
+        <item name="android:textColor">@color/primary_text</item>
         <item name="android:text">@string/default_content_description</item>
         <item name="android:gravity">left|center_vertical</item>
         <item name="android:layout_alignParentBottom">true</item>
@@ -57,7 +69,5 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:choiceMode">singleChoice</item>
     </style>
-
-
 
 </resources>

@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/grey">
+                android:background="@color/white">
 
     <!-- Player Header -->
     <LinearLayout
@@ -21,22 +21,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#04b3d2"
-            android:textSize="16dp"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceLarge"
+            android:textColor="@color/accent"
             android:paddingLeft="10dp"
-            android:textStyle="bold"
-            android:text=""
             android:layout_marginTop="10dp"/>
         <TextView
             android:id="@+id/songAlbum"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#04b3d2"
-            android:textSize="16dp"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceSmall"
+            android:textColor="@color/accent"
             android:paddingLeft="10dp"
-            android:textStyle="bold"
-            android:text=""
             android:layout_marginTop="10dp"/>
 
     </LinearLayout>
@@ -49,7 +47,7 @@
         android:paddingTop="10dp"
         android:paddingBottom="10dp"
         android:gravity="center"
-        android:layout_below="@id/player_header_bg"
+        android:layout_below="@+id/player_header_bg"
         android:layout_above="@+id/player_song_bg">
         <ImageView
             android:id="@+id/trackThumbnail"
@@ -58,13 +56,13 @@
             />
     </LinearLayout>
 
+
     <!-- Player Footer -->
     <LinearLayout
         android:id="@+id/player_footer_bg"
         android:layout_width="fill_parent"
-        android:layout_height="100dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@layout/bg_player_footer"
         android:gravity="center">
 
         <!-- Player Buttons -->
@@ -73,18 +71,8 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:background="@layout/rounded_corner"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp">
-
-            <!-- Repeat Button -->
-            <ImageButton
-                android:id="@+id/btnRepeat"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/btn_repeat"
-                android:layout_marginRight="5dp"
-                android:background="@null"/>
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp">
 
             <!-- Previous Button -->
             <ImageButton
@@ -122,15 +110,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@null"/>
-
-            <!-- Shuffle Button -->
-            <ImageButton
-                android:id="@+id/btnShuffle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/btn_shuffle"
-                android:layout_marginLeft="5dp"
-                android:background="@null"/>
         </LinearLayout>
     </LinearLayout>
 
@@ -152,8 +131,9 @@
             android:text=""
             android:layout_weight="1"
             android:gravity="left"
-            android:textColor="#eeeeee"
-            android:textStyle="bold"/>
+            android:textColor="@color/primary_text"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceSmall"/>
         <!-- Total Duration Label -->
         <TextView
             android:id="@+id/songTotalDurationLabel"
@@ -161,15 +141,16 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="right"
-            android:text=""
-            android:textColor="#04cbde"
-            android:textStyle="bold"/>
+            android:textColor="@color/primary_text"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceSmall"
+            android:text=""/>
     </LinearLayout>
 
     <!-- Progress Bar/Seek bar -->
     <SeekBar
         android:id="@+id/songProgressBar"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginRight="20dp"
         android:layout_marginLeft="20dp"
@@ -184,32 +165,47 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/songProgressBar"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:paddingLeft="5dp"
         android:paddingRight="5dp">
 
         <!-- Song Title -->
         <TextView
             android:id="@+id/songTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#04b3d2"
-            android:textSize="16dp"
+            android:textColor="@color/accent"
+            android:layout_gravity="center_vertical"
             android:paddingLeft="10dp"
-            android:textStyle="bold"
-            android:marqueeRepeatLimit="marquee_forever"
-            android:text=""
-            android:layout_marginTop="10dp"/>
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceSmall"
+            android:singleLine="true"
+            android:scrollHorizontally="true"
+            android:paddingRight="10dip"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:freezesText="true"
+            android:layout_marginTop="3dp"/>
 
-        <ProgressBar
-            android:id="@+id/player_loading_indicator"
-            style="@android:style/Widget.ProgressBar.Small"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:layout_below="@id/player_song_bg"
-            android:layout_marginTop="5dip"
-            android:visibility="invisible" />
+        <!-- Shuffle Button -->
+        <ImageButton
+            android:id="@+id/btnShuffle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/btn_shuffle"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="10dp"
+            android:background="@null"/>
+
+        <!-- Repeat Button -->
+        <ImageButton
+            android:id="@+id/btnRepeat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="10dp"
+            android:src="@drawable/btn_repeat"
+            android:background="@null"/>
     </LinearLayout>
 </RelativeLayout>

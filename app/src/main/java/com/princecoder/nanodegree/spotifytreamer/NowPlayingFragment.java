@@ -1,5 +1,6 @@
 package com.princecoder.nanodegree.spotifytreamer;
 
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,9 +17,9 @@ import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -85,9 +86,6 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     //To display the Total song duration
     private TextView songTotalDurationLabel;
 
-    // Loading bar indicator
-    ProgressBar loadingIndicator;
-
     //Media Model
     MediaModel mModel;
 
@@ -123,10 +121,11 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
     private BroadcastReceiver errorReceiver;
 
-    private BroadcastReceiver playPauseReceiver;
+    private BroadcastReceiver repeatReceiver;
 
-    //Intent received
-    private String receivedIntent;
+    private BroadcastReceiver shuffleReceiver;
+
+    private BroadcastReceiver playPauseReceiver;
 
     // Intent
     private Intent mIntent;
@@ -181,6 +180,29 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     }
 
     /***
+     * // Register a broadcast receiver to update the repeat button
+     */
+    private void registerRepeatBroadcast(){
+        Intent intent = getActivity().registerReceiver(repeatReceiver,
+                new IntentFilter(MediaPlayerService.SERVICE_UPDATE_REPEAT));
+        if (intent != null) {
+            repeatReceiver.onReceive(getActivity(), intent);
+        }
+    }
+
+
+    /***
+     * // Register a broadcast receiver to update the shuffle button
+     */
+    private void registerShuffleBroadcast(){
+        Intent intent = getActivity().registerReceiver(shuffleReceiver,
+                new IntentFilter(MediaPlayerService.SERVICE_UPDATE_SHUFFLE));
+        if (intent != null) {
+            shuffleReceiver.onReceive(getActivity(), intent);
+        }
+    }
+
+    /***
      * // Register a broadcast receiver for error handling
      */
     private void registerErrorBroadcast(){
@@ -229,6 +251,30 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         }
     }
 
+    /**
+     * //Reset the Repeat button
+     */
+    private void resetRepeatButton(){
+        if(mp!=null){
+            if(mModel.isRepeat())
+                btnRepeat.setImageResource(R.mipmap.img_btn_repeat_pressed);
+            else
+                btnRepeat.setImageResource(R.mipmap.img_btn_repeat);
+        }
+    }
+
+    /**
+     * //Reset the Shuffle button
+     */
+    private void resetShuffleButton(){
+        if(mp!=null){
+            if(mModel.isShuffle())
+                btnShuffle.setImageResource(R.mipmap.img_btn_shuffle_pressed);
+            else
+                btnShuffle.setImageResource(R.mipmap.img_btn_shuffle);
+        }
+    }
+
 
     /**
      * //Update UI elements
@@ -237,6 +283,8 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     private void updateUI(int songIndex) {
         //Reset the playPause button
         resetPlayPauseButton();
+        resetShuffleButton();
+        resetRepeatButton();
 
         // Displaying Song title
         String songTitle = mListTracks.get(songIndex).getTrackName();
@@ -343,6 +391,8 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         progressBarStopReceiver = new MediaPlayerProgressBarStopReceiver();
         errorReceiver=new MediaPlayerErrorReceiver();
         playPauseReceiver=new MediaPlayerPlayPauseReceiver();
+        repeatReceiver=new MediaPlayerRepeatReceiver();
+        shuffleReceiver=new MediaPlayerShuffleReceiver();
 
         //Register the broadcast receiver
         registerErrorBroadcast();
@@ -350,6 +400,8 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         registerProgressBarStartBroadcast();
         registerProgressBarStopBroadcast();
         registerUpdateUIBroadcast();
+        registerRepeatBroadcast();
+        registerShuffleBroadcast();
 
     }
 
@@ -375,7 +427,6 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         songCurrentDurationLabel = (TextView) rootView.findViewById(R.id.songCurrentDurationLabel);
         songTotalDurationLabel = (TextView) rootView.findViewById(R.id.songTotalDurationLabel);
         songThumb=(ImageView)rootView.findViewById(R.id.trackThumbnail);
-        loadingIndicator = (ProgressBar) rootView.findViewById(R.id.player_loading_indicator);
 
         //OnclickListener
         btnPlayPause.setOnClickListener(new View.OnClickListener() {
@@ -473,6 +524,17 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
 
     @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        Dialog dialog= super.onCreateDialog(savedInstanceState);
+
+        dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+
+        return dialog;
+    }
+
+
+    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setRetainInstance(true);
@@ -487,6 +549,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
             // I resume the UI
             updateUI(mModel.getCurrentTrackIndex());
         }
+
     }
 
     @Override
@@ -503,6 +566,8 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         getActivity().unregisterReceiver(updateUIReceiver);
         getActivity().unregisterReceiver(errorReceiver);
         getActivity().unregisterReceiver(playPauseReceiver);
+        getActivity().unregisterReceiver(repeatReceiver);
+        getActivity().unregisterReceiver(shuffleReceiver);
         getActivity().unregisterReceiver(progressBarStartReceiver);
         getActivity().unregisterReceiver(progressBarStopReceiver);
     }
@@ -630,6 +695,25 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         public void onReceive(Context context, Intent intent) {
             if(intent!=null){
                resetPlayPauseButton();
+            }
+        }
+    }
+
+
+    private class MediaPlayerRepeatReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent!=null){
+                resetRepeatButton();
+            }
+        }
+    }
+
+    private class MediaPlayerShuffleReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent!=null){
+                resetShuffleButton();
             }
         }
     }

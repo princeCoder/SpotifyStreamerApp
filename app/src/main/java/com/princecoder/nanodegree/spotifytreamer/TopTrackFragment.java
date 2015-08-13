@@ -127,7 +127,7 @@ public class TopTrackFragment extends Fragment {
     /**
      *  Check if we are online
      */
-    protected boolean isOnline() {
+    public boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         return (netInfo != null && netInfo.isConnectedOrConnecting());
@@ -200,7 +200,6 @@ public class TopTrackFragment extends Fragment {
                     mAdapter.add(t);
                     mTraks.add(t);
                     count++;
-//                    if(count==10)break;
                 }
                 // dismiss the progress dialog
                 if (mProgressDialog!=null)

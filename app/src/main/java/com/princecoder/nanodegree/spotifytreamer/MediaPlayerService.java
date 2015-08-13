@@ -91,6 +91,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public static final String SERVICE_UPDATE_PROGRESS_BAR_START = "SERVICE_UPDATE_PROGRESS_BAR_START";
     public static final String SERVICE_UPDATE_PROGRESS_BAR_STOP = "SERVICE_UPDATE_PROGRESS_BAR_STOP";
     public static final String SERVICE_UPDATE_PLAY_PAUSE="SERVICE_UPDATE_PLAY_PAUSE";
+    public static final String SERVICE_UPDATE_REPEAT="SERVICE_UPDATE_REPEAT";
+    public static final String SERVICE_UPDATE_SHUFFLE="SERVICE_UPDATE_SHUFFLE";
     public static final String SERVICE_UPDATE_UI="SERVICE_UPDATE_UI";
     public static final String EXTRA_ERROR = "EXTRA_ERROR";
 
@@ -519,6 +521,20 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         getApplicationContext().sendBroadcast(playPauseIntent);
     }
 
+    //Send  a broacast to the Now playing screen to update the repeat button
+    private void updateRepeatButton(){
+        Log.d(LOG_TAG, "updateRepeatButton");
+        Intent repeatIntent = new Intent(SERVICE_UPDATE_REPEAT);
+        getApplicationContext().sendBroadcast(repeatIntent);
+    }
+
+    //Send  a broacast to the Now playing screen to update the shuffle button
+    private void updateShuffleButton(){
+        Log.d(LOG_TAG, "updateShuffleButton");
+        Intent shuffleIntent = new Intent(SERVICE_UPDATE_SHUFFLE);
+        getApplicationContext().sendBroadcast(shuffleIntent);
+    }
+
     //Send a broadcast to the NowPlaying screen to start the seekbar
     private void StartProgressBar(){
         Log.d(LOG_TAG, "start progressBar");
@@ -542,10 +558,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             if (mp.isPlaying()) {
                 Log.d(LOG_TAG,"Pausing the media player");
                 mp.pause();
+                StopProgressBar();
             }
             else{
                 Log.d(LOG_TAG,"Resume the media player");
                 mp.start();
+                StartProgressBar();
             }
             //Update play pause buttons in the now playing screen
             updatePlayPauseButton();
@@ -601,6 +619,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             mModel.setRepeat(true);
             L.toast(getApplicationContext(), getResources().getString(R.string.repeat_on));
         }
+        updateRepeatButton();
     }
 
 
@@ -617,6 +636,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             // make shuffle to false
             mModel.setRepeat(false);
         }
+        updateShuffleButton();
     }
 
     //Seekto the pos millisecond

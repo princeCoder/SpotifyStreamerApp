@@ -22,12 +22,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/topTxt"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceLarge"
             style="@style/standard_card_top_text"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/standard_card_sub_text"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceSmall"
             android:id="@+id/subTxt" />
     </LinearLayout>
 

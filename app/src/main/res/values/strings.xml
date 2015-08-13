@@ -1,7 +1,7 @@
 <resources>
 
     <!--App name-->
-    <string name="app_name">Spotify Streamer App</string>
+    <string name="app_name">Spotify Streamer</string>
 
     <string name="action_settings">Settings</string>
 
