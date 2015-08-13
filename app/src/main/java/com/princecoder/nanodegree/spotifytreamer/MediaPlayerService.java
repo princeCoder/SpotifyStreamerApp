@@ -53,9 +53,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     //List of tracks
     private ArrayList<TrackModel> mListTracks=new ArrayList<>();
 
-
-    private Handler mHandler = new Handler();
-
     // Track whether we ever called start() on the media player so we don't try
     // to reset or release it.
     private boolean mediaPlayerHasStarted = false;
@@ -64,12 +61,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private PhoneStateListener listener;
     private boolean isPausedInCall = false;
 
-
-    // Amount of time to rewind playback when resuming after call
-    private final static int RESUME_REWIND_TIME = 3000;
-
-    private int seekForwardTime = 5000; // 5000 milliseconds
-    private int seekBackwardTime = 5000; // 5000 milliseconds
+    private int seekForwardTime = 3000; // 3000 milliseconds
+    private int seekBackwardTime = 3000; // 3000 milliseconds
 
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
@@ -126,7 +119,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         mp.setOnCompletionListener(this);
         mp.setOnErrorListener(this);
         mp.setOnInfoListener(this);
-
     }
 
 
@@ -143,9 +135,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         //Initialize the Media Player
         initMediaPlayer();
 
-        Log.d(LOG_TAG, "MediaPlayer service created");
+        L.m(LOG_TAG, "MediaPlayer service created");
 
         telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+
         // Create a PhoneStateListener to watch for off-hook and idle events
         listener = new PhoneStateListener() {
             @Override
@@ -154,18 +147,14 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                     case TelephonyManager.CALL_STATE_OFFHOOK:
                     case TelephonyManager.CALL_STATE_RINGING:
                         // Phone going off-hook or ringing, pause the player.
-                        if (mModel.isPlaying()) {
-
-                            pause();
-                            isPausedInCall = true;
-                        }
+                        playPause();
+                        isPausedInCall = true;
                         break;
                     case TelephonyManager.CALL_STATE_IDLE:
                         // Phone idle. Rewind a couple of seconds and start playing.
                         if (isPausedInCall) {
                             isPausedInCall = false;
-                            seekTo(Math.max(0, getPosition() - RESUME_REWIND_TIME));
-                            play();
+                            playPause();
                         }
                         break;
                 }
@@ -201,12 +190,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     protected void onHandleIntent(Intent intent) {
         if (intent == null || intent.getAction() == null) {
-            Log.d(LOG_TAG, "Null intent received");
+            L.m(LOG_TAG, "Null intent received");
             return;
         }
 
         currentAction=intent.getAction();
-        Log.d(LOG_TAG, "Media Player service action received: " + currentAction);
+        L.m(LOG_TAG, "Media Player service action received: " + currentAction);
         switch (currentAction){
             case MEDIASERVICE_PLAYPAUSE:
                 playPause();
@@ -319,7 +308,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //Pause the Media player
     synchronized private void pause() {
-        Log.d(LOG_TAG, "pause");
+        L.m(LOG_TAG, "pause");
         if (isPrepared) {
             if (mCurrentTrack != null) {
                 isPrepared = false;
@@ -333,7 +322,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //Stop the Media player
     synchronized private void stop() {
-        Log.d(LOG_TAG, "stop");
+        L.m(LOG_TAG, "stop");
         if (isPrepared) {
             isPrepared = false;
             mp.stop();
@@ -346,14 +335,14 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        Log.d(LOG_TAG, "Error:  " + what + " " + extra);
+        L.m(LOG_TAG, "Error:  " + what + " " + extra);
         handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
         return false;
     }
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-        Log.d(LOG_TAG, "Prepared  --- onPrepared");
+        L.m(LOG_TAG, "Prepared  --- onPrepared");
         synchronized (this) {
             if (mp != null) {
                 isPrepared = true;
@@ -361,18 +350,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
         // Start playing the track
         startPlaying();
-    }
-
-
-    // Resume the mediaplayer
-    private void resumePlaying() {
-        if (mCurrentTrack != null) {
-            if (isPrepared) {
-                play();
-            } else {
-                playCurrent();
-            }
-        }
     }
 
     // Play current track index
@@ -433,26 +410,26 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     //Prepare then play a song using the url
     private void prepareThenPlay(String url)
             throws IllegalArgumentException, IllegalStateException, IOException {
-        Log.d(LOG_TAG, "prepareThenPlay " + mCurrentTrack.getTrackName());
+        L.m(LOG_TAG, "prepareThenPlay " + mCurrentTrack.getTrackName());
         // First, clean up any existing audio.
         stop();
         mediaPlayerHasStarted = false;
-        Log.d(LOG_TAG, "listening to " + url);
+        L.m(LOG_TAG, "listening to " + url);
         synchronized (this) {
-            Log.d(LOG_TAG, "reset: " + url);
+            L.m(LOG_TAG, "reset: " + url);
             mp.reset();
             mp.setDataSource(url);
             mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            Log.d(LOG_TAG, "Preparing: " + url);
+            L.m(LOG_TAG, "Preparing: " + url);
             mp.prepareAsync();
-            Log.d(LOG_TAG, "Waiting for prepare");
+            L.m(LOG_TAG, "Waiting for prepare");
         }
     }
 
 
     //Start playing the current track
     private void startPlaying() {
-        Log.d(LOG_TAG, "StartPlaying: ");
+        L.m(LOG_TAG, "StartPlaying: ");
         play();
         //Update UI Elements
         updateUI();
@@ -466,8 +443,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             Log.e(LOG_TAG, "play - not prepared");
             return;
         }
-        Log.d(LOG_TAG, "play " + mCurrentTrack.getTrackName());
-
+        L.m(LOG_TAG, "play " + mCurrentTrack.getTrackName());
         mp.start();
         mediaPlayerHasStarted = true;
     }
@@ -509,35 +485,35 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //Send  a broacast to the Now playing screen to update the play/Pause button
     private void updateUI(){
-        Log.d(LOG_TAG, "updateUI");
+        L.m(LOG_TAG, "updateUI");
         Intent uiIntent = new Intent(SERVICE_UPDATE_UI);
         getApplicationContext().sendBroadcast(uiIntent);
     }
 
     //Send  a broacast to the Now playing screen to update the play/Pause button
     private void updatePlayPauseButton(){
-        Log.d(LOG_TAG, "updatePlayPauseButton");
+        L.m(LOG_TAG, "updatePlayPauseButton");
         Intent playPauseIntent = new Intent(SERVICE_UPDATE_PLAY_PAUSE);
         getApplicationContext().sendBroadcast(playPauseIntent);
     }
 
     //Send  a broacast to the Now playing screen to update the repeat button
     private void updateRepeatButton(){
-        Log.d(LOG_TAG, "updateRepeatButton");
+        L.m(LOG_TAG, "updateRepeatButton");
         Intent repeatIntent = new Intent(SERVICE_UPDATE_REPEAT);
         getApplicationContext().sendBroadcast(repeatIntent);
     }
 
     //Send  a broacast to the Now playing screen to update the shuffle button
     private void updateShuffleButton(){
-        Log.d(LOG_TAG, "updateShuffleButton");
+        L.m(LOG_TAG, "updateShuffleButton");
         Intent shuffleIntent = new Intent(SERVICE_UPDATE_SHUFFLE);
         getApplicationContext().sendBroadcast(shuffleIntent);
     }
 
     //Send a broadcast to the NowPlaying screen to start the seekbar
     private void StartProgressBar(){
-        Log.d(LOG_TAG, "start progressBar");
+        L.m(LOG_TAG, "start progressBar");
         Intent progressBarIntent = new Intent(SERVICE_UPDATE_PROGRESS_BAR_START);
         getApplicationContext().sendBroadcast(progressBarIntent);
     }
@@ -545,7 +521,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //Send a broadcast to the NowPlaying screen to stop the seekbar
     private void StopProgressBar(){
-        Log.d(LOG_TAG, "Stop ProgresBar");
+        L.m(LOG_TAG, "Stop ProgresBar");
         Intent progressBarIntent = new Intent(SERVICE_UPDATE_PROGRESS_BAR_STOP);
         getApplicationContext().sendBroadcast(progressBarIntent);
     }
@@ -556,12 +532,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         // check for already playing
         if (mp!=null) {
             if (mp.isPlaying()) {
-                Log.d(LOG_TAG,"Pausing the media player");
+                L.m(LOG_TAG, "Pausing the media player");
                 mp.pause();
                 StopProgressBar();
             }
             else{
-                Log.d(LOG_TAG,"Resume the media player");
+                L.m(LOG_TAG, "Resume the media player");
                 mp.start();
                 StartProgressBar();
             }
@@ -573,7 +549,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //Backward the current track
     synchronized private void backward(){
-        Log.d(LOG_TAG,"backward the media player");
+        L.m(LOG_TAG, "backward the media player");
 
         //Todo updateProgressBar
         if (mp!=null){
@@ -593,7 +569,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //Forward the current track
     synchronized private void forward(){
-        Log.d(LOG_TAG,"forward the media player");
+        L.m(LOG_TAG, "forward the media player");
 
         if(mp!=null){
             // get current song position
@@ -641,18 +617,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //Seekto the pos millisecond
     synchronized private void seekTo(int pos) {
-        Log.d(LOG_TAG,"Seek to position: "+pos);
+        L.m(LOG_TAG, "Seek to position: " + pos);
         if (isPrepared) {
             mp.seekTo(pos);
             StartProgressBar();
         }
-    }
-
-    //get the current position of the song
-    synchronized private int getPosition() {
-        if (isPrepared) {
-            return mp.getCurrentPosition();
-        }
-        return 0;
     }
 }

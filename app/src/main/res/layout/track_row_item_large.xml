@@ -24,6 +24,7 @@
             android:id="@+id/topTxt"
             android:fontFamily="sans-serif-condensed"
             android:textColor="@color/primary_text"
+            android:textSize="22sp"
             android:textAppearance="?android:textAppearanceLarge"
             style="@style/standard_card_top_text"/>
 
@@ -32,8 +33,9 @@
             android:layout_height="wrap_content"
             style="@style/standard_card_sub_text"
             android:textColor="@color/primary_text"
+            android:textSize="22sp"
             android:fontFamily="sans-serif-condensed"
-            android:textAppearance="?android:textAppearanceLarge"
+            android:textAppearance="?android:textAppearanceSmall"
             android:id="@+id/subTxt" />
     </LinearLayout>
 
