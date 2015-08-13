@@ -16,6 +16,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/topTxt"
         android:textColor="@color/primary_text"
+        android:textSize="18sp"
         android:fontFamily="sans-serif-condensed"
         android:textAppearance="?android:textAppearanceLarge"
         style="@style/standard_card_top_text"/>
