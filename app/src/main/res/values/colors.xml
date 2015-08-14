@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="transparent">#00FFFFFF</color>
-    <color name="black">#000</color>
     <color name="white">#FFF</color>
-    <color name="red">#E25050</color>
     <color name="grey">#cccccc</color>
-    <color name="spotify_yellow_green">#ADFF2F</color>
-    <color name="spotify_light_blue">#ADD8E6</color>
-
     <color name="primary">#607D8B</color>
     <color name="primary_dark">#455A64</color>
     <color name="primary_light">#CFD8DC</color>

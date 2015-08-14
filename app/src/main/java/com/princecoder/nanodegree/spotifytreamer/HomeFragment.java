@@ -60,8 +60,7 @@ public class HomeFragment extends Fragment {
     private int mPosition;
 
     //Selected item
-
-    private final String SELECTED_KEY="Selected_key";
+    private final String SELECTED_KEY="SELECTED_KEY";
 
     //List_TAG
 
@@ -161,15 +160,18 @@ public class HomeFragment extends Fragment {
             if (savedInstanceState!=null) {
                 if (savedInstanceState.containsKey(SELECTED_KEY)) {
                     mPosition = savedInstanceState.getInt(SELECTED_KEY);
-                    if (mPosition != ListView.INVALID_POSITION) {
-                        mListView.smoothScrollToPosition(mPosition);
-                    }
-
                 }
 
                 if (savedInstanceState.containsKey(LIST_TAG)) {
-                    mListOfArtist= (ArrayList<IElement>) savedInstanceState.getSerializable(LIST_TAG);
+                    try {
+                        mListOfArtist= (ArrayList<IElement>) savedInstanceState.getSerializable(LIST_TAG);
+                    } catch (ClassCastException e) {
+                        e.printStackTrace();
+                    }
                 }
+            }
+            if (mPosition != ListView.INVALID_POSITION) {
+                mListView.smoothScrollToPosition(mPosition);
             }
 
             //Initialize the adapter
@@ -190,7 +192,7 @@ public class HomeFragment extends Fragment {
             if(mPosition!=ListView.INVALID_POSITION){
                 outState.putInt(SELECTED_KEY,mPosition);
             }
-            outState.putSerializable(LIST_TAG,mListOfArtist);
+            outState.putSerializable(LIST_TAG, mListOfArtist);
             super.onSaveInstanceState(outState);
         }
 

@@ -17,6 +17,10 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
     // boolean value to know if it is a tablet or not
     private boolean mTwoPane;
 
+    //Top fragment tag
+    public static final String TRACK_FRAGMENT_TAG="TRACK_FRAGMENT_TAG";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,7 +31,7 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
             if(savedInstanceState==null){
                 // Add the fragment to the 'fragment_container' FrameLayout
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.trackContainer, new TopTrackFragment(),getString(R.string.top_track_fragment_tag)).commit();
+                        .replace(R.id.trackContainer, new TopTrackFragment(),TRACK_FRAGMENT_TAG).commit();
             }
         }
         else{
@@ -35,6 +39,7 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
         }
 
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -61,7 +66,7 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
     public void onArtistSelectedListener(ArtistModel artist) {
         if(mTwoPane){  // We display the tracks of the selected artist by adding or replacing the TopTrack fragment using a fragment transaction
 
-            TopTrackFragment fragment =(TopTrackFragment)getSupportFragmentManager().findFragmentByTag(getResources().getString(R.string.top_track_fragment_tag));
+            TopTrackFragment fragment =(TopTrackFragment)getSupportFragmentManager().findFragmentByTag(TRACK_FRAGMENT_TAG);
             if(artist==null){
                 if(fragment!=null){
                     fragment.getAdapter().clear();
@@ -70,7 +75,7 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
             }
             else{
                 Bundle args = new Bundle();
-                args.putSerializable(getString(R.string.selected_artist),artist);
+                args.putSerializable(TopTrackFragment.SELECTED_ARTIST,artist);
 
                 // Create fragment and pass the selected artist as argument
                 fragment = new TopTrackFragment();
@@ -79,7 +84,7 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
 
 
             // Replace whatever is in the fragment_container view with this fragment
-            getSupportFragmentManager().beginTransaction().replace(R.id.trackContainer, fragment,getResources().getString(R.string.top_track_fragment_tag)).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.trackContainer, fragment,TRACK_FRAGMENT_TAG).commit();
         }
         else{// we are not on a tablet. we start a new activity
             if(artist!=null){

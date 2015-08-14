@@ -56,6 +56,19 @@ public class TopTrackFragment extends Fragment {
     //Associated artist
     private ArtistModel mArtist=new ArtistModel();
 
+    //Position
+    private int mPosition;
+
+    //Tracks Tag
+    private static final String TRACKS="TRACKs";
+
+    //Selected item
+    private final String SELECTED_KEY="SELECTED_KEY";
+
+    //Artist Tag
+    public static final String SELECTED_ARTIST="SELECTED_ARTIST";
+
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -76,6 +89,7 @@ public class TopTrackFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        setRetainInstance(true);
     }
 
 
@@ -95,25 +109,45 @@ public class TopTrackFragment extends Fragment {
 
                 // Let the activity do the job for us
                 // We have the list of tracks to play and the selected track by the user
-                mListener.onTrackSelectedListener(mTraks,position);
+                mListener.onTrackSelectedListener(mTraks, position);
+                mPosition=position;
             }
         });
 
-        // Set the adapter
-        mTrackListView.setAdapter(mAdapter);
+        if(savedInstanceState!=null){
+            if(savedInstanceState.containsKey(TRACKS)){
+                try {
+                    mTraks=(ArrayList<IElement>)savedInstanceState.getSerializable(TRACKS);
+                    mAdapter=new TrackAdapter(getActivity(),R.layout.track_row_item,R.id.topTxt,mTraks);
+                } catch (ClassCastException e) {
+                    e.printStackTrace();
+                }
+            }
 
-        Intent intent=getActivity().getIntent();
-        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
-            ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
-            new TopTrackAsyncTask().execute(artist.getSpotifyId());
-        }
-        else{ // We are in dual pane mode
-            Bundle args=getArguments();
-            if(args!=null){
-                mArtist = (ArtistModel)args.getSerializable(getString(R.string.selected_artist));
-                new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
+            if (savedInstanceState.containsKey(SELECTED_KEY)) {
+                mPosition = savedInstanceState.getInt(SELECTED_KEY);
+                if (mPosition != ListView.INVALID_POSITION) {
+                    mTrackListView.smoothScrollToPosition(mPosition);
+                }
+
+            }
+        }else{
+            Intent intent=getActivity().getIntent();
+            if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
+                ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
+                new TopTrackAsyncTask().execute(artist.getSpotifyId());
+            }
+            else{ // We are in dual pane mode
+                Bundle args=getArguments();
+                if(args!=null){
+                    mArtist = (ArtistModel)args.getSerializable(SELECTED_ARTIST);
+                    new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
+                }
             }
         }
+
+        // Set the adapter
+        mTrackListView.setAdapter(mAdapter);
 
         // Inflate the layout for this fragment
         return rootView;
@@ -136,6 +170,17 @@ public class TopTrackFragment extends Fragment {
     // If the user selected a new Artist
     public void onArtistChange(String spotifyId){
         new TopTrackAsyncTask().execute(spotifyId);
+    }
+
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if(mPosition!=ListView.INVALID_POSITION){
+            outState.putInt(SELECTED_KEY,mPosition);
+        }
+        outState.putSerializable(TRACKS,mTraks);
     }
 
     /**
@@ -187,19 +232,17 @@ public class TopTrackFragment extends Fragment {
                 L.toast(getActivity(),getResources().getString(R.string.no_track));
             }
             else{
-                int count =0;
                 for (Track track : tracks.tracks) {
                     TrackModel t = new TrackModel();
                     t.setTrackName(track.name);
                     t.setPrevUrl(track.preview_url);
                     t.setAlbum(track.album.name);
-                    t.setArtist((track.artists.size()>0?track.artists.get(0).name:"Unknown Artist"));
+                    t.setArtist((track.artists.size() > 0 ? track.artists.get(0).name : "Unknown Artist"));
                     if(track.album.images!=null && track.album.images.size()>0){
                         t.setAlbThumb(track.album.images.get(0).url);
                     }
                     mAdapter.add(t);
                     mTraks.add(t);
-                    count++;
                 }
                 // dismiss the progress dialog
                 if (mProgressDialog!=null)

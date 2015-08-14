@@ -7,8 +7,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -34,7 +32,7 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
 
         //We create the Top Track fragment and add it to the activity
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.trackContainer, new TopTrackFragment(),getString(R.string.top_track_fragment_tag))
+                    .add(R.id.trackContainer, new TopTrackFragment(),HomeActivity.TRACK_FRAGMENT_TAG)
                     .commit();
         }
     }
@@ -68,7 +66,7 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
 
 
         //Set the title of the actionBar
-        getSupportActionBar().setTitle("top tracks");
+        getSupportActionBar().setTitle("Top tracks");
         getSupportActionBar().setSubtitle(artist.getName());
     }
 
@@ -82,30 +80,15 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
         args.putSerializable(NowPlayingFragment.LIST_TRACKS, list);
         args.putInt(NowPlayingFragment.TRACK_INDEX, position);
 
-        //Fragment manager
-        FragmentManager manager=getSupportFragmentManager();
-
-        // The device is smaller, so show the fragment fullscreen
-        FragmentTransaction transaction = manager.beginTransaction();
-        transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-        // To make it fullscreen, use the 'content' root view as the container
-        // for the fragment, which is always the root view for the activity
-
-
-
         // Instantiate the nowPlaying fragment
         NowPlayingFragment fragment=new NowPlayingFragment();
         if(isOnline()){ // Make sure we start playing if we have internet
             fragment.setArguments(args);
             fragment.show(getSupportFragmentManager(), "now playing");
-
         }
         else {
             L.toast(this,getResources().getString(R.string.no_internet));
         }
-
-//        transaction.add(R.id.trackContainer, fragment)
-//                .addToBackStack(null).commit();
     }
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override

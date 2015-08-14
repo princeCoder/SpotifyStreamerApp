@@ -28,8 +28,6 @@
 
     <!--Progress Dialog message-->
     <string name="progress_dialog_message">Please wait ...</string>
-    <!--Selected artist-->
-    <string name="selected_artist">selected_artist</string>
 
     <string name="progress_dialog_title">Working</string>
 
@@ -46,7 +44,6 @@
     <string name="track_selected_class_cast_exception_message">" must implement OnTrackSelectedListener"</string>
 
     <!--Top track fragment tag-->
-    <string name="top_track_fragment_tag">TopTrackFragment</string>
 
     <string name="msg_unknown_error">Unknown error occurred.</string>
 
