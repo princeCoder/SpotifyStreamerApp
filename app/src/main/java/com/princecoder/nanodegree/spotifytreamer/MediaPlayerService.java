@@ -336,6 +336,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         L.m(LOG_TAG, "Error:  " + what + " " + extra);
+        //Reset the media Player
+        mp.reset();
         handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
         return false;
     }
@@ -358,6 +360,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 if(mModel!=null){
                     mCurrentTrack=mListTracks.get(mCurrentTrackIndex);
                     if (mCurrentTrack == null || mCurrentTrack.getPrevUrl() == null) {
+                        mp.reset();
                         Intent intent = new Intent(SERVICE_ERROR_NAME);
                         intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal());
                         getApplicationContext().sendBroadcast(intent);
@@ -372,15 +375,19 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 }
             } catch (UnknownHostException e) {
                 Log.w(LOG_TAG, "Unknown host in playCurrent");
+                mp.reset();
                 handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
             } catch (ConnectException e) {
                 Log.w(LOG_TAG, "Connect exception in playCurrent");
+                mp.reset();
                 handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
             } catch (IOException e) {
                 Log.e(LOG_TAG, "IOException on playlist entry " + mCurrentTrack.getTrackName(), e);
+                mp.reset();
                 handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
             } catch (IllegalStateException e) {
                 Log.e(LOG_TAG, "Illegal state exception trying to play entry " + mCurrentTrack.getTrackName(), e);
+                mp.reset();
                 handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
             }
         return false;

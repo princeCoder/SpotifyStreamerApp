@@ -25,6 +25,7 @@
             android:fontFamily="sans-serif-condensed"
             android:textColor="@color/primary_text"
             android:textSize="18sp"
+            android:freezesText="true"
             android:textAppearance="?android:textAppearanceLarge"
             style="@style/standard_card_top_text"/>
 
@@ -34,7 +35,6 @@
             style="@style/standard_card_top_text"
             android:textColor="@color/primary_text"
             android:textSize="18sp"
-            android:fontFamily="sans-serif-condensed"
             android:textAppearance="?android:textAppearanceLarge"
             android:id="@+id/subTxt" />
     </LinearLayout>

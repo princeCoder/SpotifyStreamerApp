@@ -103,10 +103,8 @@ public class ArtistAdapter extends ArrayAdapter<IElement> {
 
 
         public ViewHolder(View v){
-
             mTopTxt=(TextView)v.findViewById(R.id.topTxt);
             mPicture=(ImageView)v.findViewById(R.id.thumb);
-
         }
 
         public TextView getTopTxt() {

@@ -97,8 +97,8 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
         NowPlayingFragment fragment=new NowPlayingFragment();
         if(isOnline()){ // Make sure we start playing if we have internet
             fragment.setArguments(args);
-
             fragment.show(getSupportFragmentManager(), "now playing");
+
         }
         else {
             L.toast(this,getResources().getString(R.string.no_internet));

@@ -5,12 +5,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.DialogFragment;
@@ -22,16 +19,13 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.model.TrackModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
 import com.princecoder.nanodegree.spotifytreamer.utils.Utilities;
+import com.squareup.picasso.Picasso;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 /**
  *  Dialog fragment use to show the Media player
@@ -297,7 +291,9 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
         //Set the thumb image
         if(mListTracks.get(songIndex).getThumb()!=null)
-            new LoadThumbImage().execute(mListTracks.get(songIndex).getThumb());
+        Picasso.with(getActivity())
+                .load(mListTracks.get(songIndex).getThumb())
+                .into(songThumb);
     }
 
     /**
@@ -424,6 +420,9 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         songTitleLabel = (TextView) rootView.findViewById(R.id.songTitle);
         songAlbumLabel = (TextView) rootView.findViewById(R.id.songAlbum);
         songArtistLabel = (TextView) rootView.findViewById(R.id.songArtist);
+        songArtistLabel.setSelected(true);
+        songAlbumLabel.setSelected(true);
+        songTitleLabel.setSelected(true);
         songCurrentDurationLabel = (TextView) rootView.findViewById(R.id.songCurrentDurationLabel);
         songTotalDurationLabel = (TextView) rootView.findViewById(R.id.songTotalDurationLabel);
         songThumb=(ImageView)rootView.findViewById(R.id.trackThumbnail);
@@ -604,34 +603,6 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         }
     }
 
-
-    // Set the value of the Album Thumbnail
-    // I have created this Asynctask to be able to set that value on the main thread
-    private class LoadThumbImage extends AsyncTask<String, Void, Bitmap> {
-
-        @Override
-        protected Bitmap doInBackground(String... params) {
-            URL myUrl;
-            Bitmap bm=null;
-
-            try {
-                myUrl = new URL(params[0]);
-                URLConnection con=myUrl.openConnection();
-                bm=BitmapFactory.decodeStream(con.getInputStream());
-            }  catch (IOException e) {
-                // e.printStackTrace();
-                L.m(LOG_TAG,e.getMessage());
-            }
-            return bm;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap result) {
-            songThumb.setImageBitmap(result);
-        }
-
-    }
-
     /**
      *  Check if we are online
      */
@@ -652,6 +623,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
             if(!isOnline()){
                 message = context.getString(R.string.msg_playback_connection_error);
                 L.m(LOG_TAG, "Not connected to internet");
+                L.toast(context,message);
             }
             else{
                 int error = intent.getIntExtra(MediaPlayerService.EXTRA_ERROR, -1);
@@ -665,8 +637,8 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
                 else if (error == MediaPlayerService.MEDIAPLAYER_SERVICE_ERROR.Connection.ordinal()) {
                     message = context.getString(R.string.msg_playback_connection_error);
                 }
+                L.m(LOG_TAG,message);
             }
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
         }
     }
 
