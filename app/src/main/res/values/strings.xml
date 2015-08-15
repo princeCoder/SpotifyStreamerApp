@@ -49,7 +49,7 @@
 
     <string name="msg_playback_error">An error has occurred</string>
 
-    <string name="msg_playback_invalid_track_error">Unable to play selected item.</string>
+    <string name="msg_playback_invalid_track_error">Unable to play selected item. Moveing to the next track</string>
 
     <string name="msg_playback_connection_error">Check your internet connection</string>
 

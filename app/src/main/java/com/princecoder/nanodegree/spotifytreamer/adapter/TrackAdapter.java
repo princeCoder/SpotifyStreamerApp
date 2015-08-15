@@ -49,6 +49,10 @@ public class TrackAdapter extends ArrayAdapter<IElement> {
         return mElements.size();
     }
 
+    public ArrayList<IElement> getElements() {
+        return mElements;
+    }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         // TODO Auto-generated method stub

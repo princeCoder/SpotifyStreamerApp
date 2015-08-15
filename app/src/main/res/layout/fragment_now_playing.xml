@@ -27,6 +27,7 @@
             android:paddingLeft="15dp"
             android:paddingRight="15dp"
             android:ellipsize="marquee"
+            android:singleLine="true"
             android:gravity="center"
             android:marqueeRepeatLimit="marquee_forever"
             android:scrollHorizontally="true"
@@ -34,6 +35,8 @@
             android:focusableInTouchMode="true"
             android:freezesText="true"
             android:layout_marginTop="10dp"/>
+
+        <!--song album-->
         <TextView
             android:id="@+id/songAlbum"
             android:layout_width="wrap_content"
@@ -46,6 +49,7 @@
             android:paddingRight="15dp"
             android:ellipsize="marquee"
             android:gravity="center"
+            android:singleLine="true"
             android:marqueeRepeatLimit="marquee_forever"
             android:scrollHorizontally="true"
             android:focusable="true"

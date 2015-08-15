@@ -314,7 +314,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             }
         }
         else {
-//            mp.reset();
             handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
 //            StopProgressBar();
         }
@@ -388,6 +387,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                         intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal());
                         getApplicationContext().sendBroadcast(intent);
 
+                        //move to the next track
+                        next();
+
                         return false;
                     }
                     //Update the model with the current song
@@ -399,19 +401,15 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             }
         } catch (UnknownHostException e) {
             Log.w(LOG_TAG, "Unknown host in playCurrent");
-            mp.reset();
             handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
         } catch (ConnectException e) {
             Log.w(LOG_TAG, "Connect exception in playCurrent");
-            mp.reset();
             handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
         } catch (IOException e) {
             Log.e(LOG_TAG, "IOException on playlist entry " + mCurrentTrack.getTrackName(), e);
-            mp.reset();
             handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
         } catch (IllegalStateException e) {
             Log.e(LOG_TAG, "Illegal state exception trying to play entry " + mCurrentTrack.getTrackName(), e);
-            mp.reset();
             handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
         }
         return false;
@@ -425,6 +423,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         switch (error){
             case MediaPlayer:
                 intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.MediaPlayer.ordinal());
+                mp.reset();
                 break;
             case InvalidTrack:
                 intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal());
@@ -445,7 +444,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
 
-    private void resumePlaying() {
+    synchronized private void resumePlaying() {
         L.m(LOG_TAG, "----------------------- Media Service  resumePlaying");
         if (mp.isPlaying())
             //I resume the progress bar
@@ -457,7 +456,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
 
     //Prepare then play a song using the url
-    private void prepareThenPlay(String url)
+    synchronized private void prepareThenPlay(String url)
             throws IllegalArgumentException, IllegalStateException, IOException {
         L.m(LOG_TAG, "prepareThenPlay " + mCurrentTrack.getTrackName());
         // First, clean up any existing audio.
@@ -553,35 +552,35 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     //Send  a broacast to the Now playing screen to update the play/Pause button
-    private void updateUI(){
+    synchronized private void updateUI(){
         L.m(LOG_TAG, "updateUI");
         Intent uiIntent = new Intent(SERVICE_UPDATE_UI);
         getApplicationContext().sendBroadcast(uiIntent);
     }
 
     //Send  a broacast to the Now playing screen to update the play/Pause button
-    private void updatePlayPauseButton(){
+    synchronized private void updatePlayPauseButton(){
         L.m(LOG_TAG, "updatePlayPauseButton");
         Intent playPauseIntent = new Intent(SERVICE_UPDATE_PLAY_PAUSE);
         getApplicationContext().sendBroadcast(playPauseIntent);
     }
 
     //Send  a broacast to the Now playing screen to update the repeat button
-    private void updateRepeatButton(){
+    synchronized private void updateRepeatButton(){
         L.m(LOG_TAG, "updateRepeatButton");
         Intent repeatIntent = new Intent(SERVICE_UPDATE_REPEAT);
         getApplicationContext().sendBroadcast(repeatIntent);
     }
 
     //Send  a broacast to the Now playing screen to update the shuffle button
-    private void updateShuffleButton(){
+    synchronized private void updateShuffleButton(){
         L.m(LOG_TAG, "updateShuffleButton");
         Intent shuffleIntent = new Intent(SERVICE_UPDATE_SHUFFLE);
         getApplicationContext().sendBroadcast(shuffleIntent);
     }
 
     //Send a broadcast to the NowPlaying screen to start the seekbar
-    private void StartProgressBar(){
+    synchronized private void StartProgressBar(){
         L.m(LOG_TAG, "start progressBar");
         Intent progressBarIntent = new Intent(SERVICE_UPDATE_PROGRESS_BAR_START);
         getApplicationContext().sendBroadcast(progressBarIntent);
@@ -589,7 +588,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
 
     //Send a broadcast to the NowPlaying screen to stop the seekbar
-    private void StopProgressBar(){
+    synchronized private void StopProgressBar(){
         L.m(LOG_TAG, "Stop ProgresBar");
         Intent progressBarIntent = new Intent(SERVICE_UPDATE_PROGRESS_BAR_STOP);
         getApplicationContext().sendBroadcast(progressBarIntent);
@@ -606,12 +605,16 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 StopProgressBar();
             }
             else{
-                L.m(LOG_TAG, "Resume the media player");
-                mp.start();
-                StartProgressBar();
+
+                if(isOnline()){
+                    L.m(LOG_TAG, "Resume the media player");
+                    mp.start();
+                    StartProgressBar();
+                }
+                else {
+                    handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
+                }
             }
-            //Update play pause buttons in the now playing screen
-            //updatePlayPauseButton();
 
             //Update UI
             updateUI();

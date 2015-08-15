@@ -124,8 +124,10 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     // Intent
     private Intent mIntent;
 
-    //
+    //use to handle the starting
     private boolean isFirstTime=true;
+
+    private boolean isProgressbarStoped=true;
 
     // Play/Pause Tag use to send a message to the service that we pressed the Play/Pause button
     public static String PLAY_PAUSE="RESET_PLAY_PAUSE";
@@ -283,20 +285,22 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         resetShuffleButton();
         resetRepeatButton();
 
-        // Displaying Song title
-        String songTitle = mListTracks.get(songIndex).getTrackName();
-        String songAlbum=mListTracks.get(songIndex).getAlbum();
-        String songArtist=mListTracks.get(songIndex).getArtist();
+        if(songIndex<mListTracks.size()){
+            // Displaying Song title
+            String songTitle = mListTracks.get(songIndex).getTrackName();
+            String songAlbum=mListTracks.get(songIndex).getAlbum();
+            String songArtist=mListTracks.get(songIndex).getArtist();
 
-        songTitleLabel.setText(songTitle);
-        songAlbumLabel.setText(songAlbum);
-        songArtistLabel.setText(songArtist);
+            songTitleLabel.setText(songTitle);
+            songAlbumLabel.setText(songAlbum);
+            songArtistLabel.setText(songArtist);
 
-        //Set the thumb image
-        if(mListTracks.get(songIndex).getThumb()!=null)
-        Picasso.with(getActivity())
-                .load(mListTracks.get(songIndex).getThumb())
-                .into(songThumb);
+            //Set the thumb image
+            if(mListTracks.get(songIndex).getThumb()!=null)
+                Picasso.with(getActivity())
+                        .load(mListTracks.get(songIndex).getThumb())
+                        .into(songThumb);
+        }
     }
 
     /**
@@ -346,7 +350,9 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
      * Update timer on seekbar
      * */
     public void updateProgressBar() {
-        mHandler.postDelayed(mUpdateTimeTask, 100);
+        if(isProgressbarStoped){
+            mHandler.postDelayed(mUpdateTimeTask, 100);
+        }
     }
 
     /**
@@ -370,6 +376,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
                 // Running this thread after 100 milliseconds
                 mHandler.postDelayed(this, 100);
+                isProgressbarStoped=false;
             }
         }
     };
@@ -551,6 +558,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         super.onStop();
         L.m(LOG_TAG, "---------------Now Playing onStop-------------");
         mHandler.removeCallbacks(mUpdateTimeTask);
+        isProgressbarStoped=true;
 
         //Unregister the receivers
         getActivity().unregisterReceiver(updateUIReceiver);
@@ -573,6 +581,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
         mHandler.removeCallbacks(mUpdateTimeTask);
+        isProgressbarStoped=true;
     }
 
     /**
@@ -583,6 +592,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         if(mp!=null){
 
             mHandler.removeCallbacks(mUpdateTimeTask);
+            isProgressbarStoped=true;
             int totalDuration = mp.getDuration();
             int currentPosition = utils.progressToTimer(seekBar.getProgress(), totalDuration);
 
@@ -619,14 +629,19 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
             else{
                 int error = intent.getIntExtra(MediaPlayerService.EXTRA_ERROR, -1);
                 if (error == MediaPlayerService.MEDIAPLAYER_SERVICE_ERROR.MediaPlayer.ordinal()) {
-
                     message = context.getString(R.string.msg_playback_error);
                 } else if (error == MediaPlayerService.MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal()) {
                     message = context.getString(R.string.msg_playback_invalid_track_error);
                 }
-                L.m(LOG_TAG,message);
+                L.m(LOG_TAG, message);
             }
-            resetPlayPauseButton();
+
+            if(!isProgressbarStoped){
+//                L.m(LOG_TAG, "--------------------- ProgressBarStopValue=  "+isProgressbarStoped);
+                mHandler.removeCallbacks(mUpdateTimeTask);
+                isProgressbarStoped=true;
+            }
+            updateUI(mModel.getCurrentTrackIndex());
         }
     }
 
@@ -685,7 +700,10 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         public void onReceive(Context context, Intent intent) {
             if(intent!=null){
                 if(mHandler!=null){
-                    mHandler.removeCallbacks(mUpdateTimeTask);
+                    if(!isProgressbarStoped){
+                        mHandler.removeCallbacks(mUpdateTimeTask);
+                        isProgressbarStoped=true;
+                    }
                 }
             }
         }

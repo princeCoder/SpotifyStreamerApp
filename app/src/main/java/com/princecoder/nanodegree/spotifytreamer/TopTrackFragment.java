@@ -45,9 +45,6 @@ public class TopTrackFragment extends Fragment {
     // The ListView
     private ListView mTrackListView;
 
-    // List of Artists
-    private ArrayList<IElement> mTraks=new ArrayList<>();
-
     // My adapter
     private TrackAdapter mAdapter;
 
@@ -62,12 +59,6 @@ public class TopTrackFragment extends Fragment {
 
     //Position
     private int mPosition;
-
-    //Tracks Tag
-    private static final String TRACKS="TRACKs";
-
-    //Selected item
-    private final String SELECTED_KEY="SELECTED_KEY";
 
     //Artist Tag
     public static final String SELECTED_ARTIST="SELECTED_ARTIST";
@@ -104,10 +95,9 @@ public class TopTrackFragment extends Fragment {
         mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
                 // Let the activity do the job for us
                 // We have the list of tracks to play and the selected track by the user
-                mListener.onTrackSelectedListener(mTraks, position);
+                mListener.onTrackSelectedListener(mAdapter.getElements(), position);
                 mPosition = position;
             }
         });
@@ -211,7 +201,6 @@ public class TopTrackFragment extends Fragment {
         @Override
         protected void onPostExecute(Tracks tracks) {
             mAdapter.clear();
-            mTraks.clear();
             if (tracks == null || tracks.tracks.size() == 0) {
                 if(mProgressDialog!=null && mProgressDialog.isShowing())
                     mProgressDialog.dismiss();
@@ -228,7 +217,6 @@ public class TopTrackFragment extends Fragment {
                         t.setAlbThumb(track.album.images.get(0).url);
                     }
                     mAdapter.add(t);
-                    mTraks.add(t);
                 }
                 // dismiss the progress dialog
                 if (mProgressDialog!=null && mProgressDialog.isShowing())
