@@ -1,9 +1,12 @@
 package com.princecoder.nanodegree.spotifytreamer;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -88,6 +91,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public static final String SERVICE_UPDATE_SHUFFLE="SERVICE_UPDATE_SHUFFLE";
     public static final String SERVICE_UPDATE_UI="SERVICE_UPDATE_UI";
     public static final String EXTRA_ERROR = "EXTRA_ERROR";
+    public static final String MEDIASERVICE_RESUME_PLAYING="MEDIASERVICE_RESUME_PLAYING";
 
     public enum MEDIAPLAYER_SERVICE_ERROR {MediaPlayer, Connection, InvalidTrack}
 
@@ -147,14 +151,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                     case TelephonyManager.CALL_STATE_OFFHOOK:
                     case TelephonyManager.CALL_STATE_RINGING:
                         // Phone going off-hook or ringing, pause the player.
-                        playPause();
-                        isPausedInCall = true;
+                        if (isPlaying()) {
+                            isPausedInCall = true;
+                            pause();
+                        }
                         break;
                     case TelephonyManager.CALL_STATE_IDLE:
                         // Phone idle. Rewind a couple of seconds and start playing.
                         if (isPausedInCall) {
                             isPausedInCall = false;
-                            playPause();
+                            seekTo(getPosition());
+                            play();
                         }
                         break;
                 }
@@ -222,7 +229,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 playCurrent();
                 break;
             case MEDIASERVICE_SEEK_TO:
-                seekTo(intent.getIntExtra(CURRENT_POSITION,0));
+                seekTo(intent.getIntExtra(CURRENT_POSITION, 0));
+                break;
+            case MEDIASERVICE_RESUME_PLAYING:
+                resumePlaying();
                 break;
             default:
                 break;
@@ -234,8 +244,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public boolean onInfo(MediaPlayer mp, int what, int extra) {
         return false;
     }
-
-
 
     @Override
     public void onDestroy() {
@@ -275,49 +283,54 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public void onCompletion(MediaPlayer mp) {
         Log.w(LOG_TAG, "onComplete()");
-            // check for repeat is ON or OFF
-            if(mModel.isRepeat()){
-                // repeat is on play same song again
-                playCurrent();
-            } else if(mModel.isShuffle()){
-                // shuffle is on - play a random song
-                Random rand = new Random();
-                int currentSongIndex = rand.nextInt(mListTracks.size());
+        // check for repeat is ON or OFF
+        if(mModel.isRepeat()){
+            // repeat is on play same song again
+            playCurrent();
+        } else if(mModel.isShuffle()){
+            // shuffle is on - play a random song
+            Random rand = new Random();
+            int currentSongIndex = rand.nextInt(mListTracks.size());
+            mCurrentTrackIndex=currentSongIndex;
+            mModel.setCurrentSongIndex(mCurrentTrackIndex);
+            playCurrent();
+        } else{
+            // no repeat or shuffle ON - play next song
+            if(mCurrentTrackIndex < mListTracks.size() - 1){
+                int currentSongIndex = mCurrentTrackIndex + 1;
                 mCurrentTrackIndex=currentSongIndex;
                 mModel.setCurrentSongIndex(mCurrentTrackIndex);
+
                 playCurrent();
-            } else{
-                // no repeat or shuffle ON - play next song
-                if(mCurrentTrackIndex < mListTracks.size() - 1){
-                    int currentSongIndex = mCurrentTrackIndex + 1;
-                    mCurrentTrackIndex=currentSongIndex;
-                    mModel.setCurrentSongIndex(mCurrentTrackIndex);
-
-                    playCurrent();
 
 
-                }else{
-                    // play first song
-                    mCurrentTrackIndex=0;
-                    mModel.setCurrentSongIndex(mCurrentTrackIndex);
-                    playCurrent();
-                }
+            }else{
+                // play first song
+                mCurrentTrackIndex=0;
+                mModel.setCurrentSongIndex(mCurrentTrackIndex);
+                playCurrent();
             }
+        }
+    }
+
+    //Is the Media player playing?
+    synchronized private boolean isPlaying() {
+        return isPrepared && mp.isPlaying();
     }
 
 
     //Pause the Media player
     synchronized private void pause() {
         L.m(LOG_TAG, "pause");
-        if (isPrepared) {
-            if (mCurrentTrack != null) {
-                isPrepared = false;
-                mp.stop();
-            } else {
+        if (isPrepared && mp.isPlaying()) {
+                L.m(LOG_TAG, "Pausing the media player");
                 mp.pause();
-            }
+                //Stop the progress bar
+                StopProgressBar();
+
+                //Update UI
+                updateUI();
         }
-        stopForeground(true);
     }
 
     //Stop the Media player
@@ -330,8 +343,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             StopProgressBar();
         }
     }
-
-
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
@@ -356,40 +367,40 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     // Play current track index
     private boolean playCurrent() {
-            try {
-                if(mModel!=null){
-                    mCurrentTrack=mListTracks.get(mCurrentTrackIndex);
-                    if (mCurrentTrack == null || mCurrentTrack.getPrevUrl() == null) {
-                        mp.reset();
-                        Intent intent = new Intent(SERVICE_ERROR_NAME);
-                        intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal());
-                        getApplicationContext().sendBroadcast(intent);
+        try {
+            if(mModel!=null){
+                mCurrentTrack=mListTracks.get(mCurrentTrackIndex);
+                if (mCurrentTrack == null || mCurrentTrack.getPrevUrl() == null) {
+                    mp.reset();
+                    Intent intent = new Intent(SERVICE_ERROR_NAME);
+                    intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal());
+                    getApplicationContext().sendBroadcast(intent);
 
-                        return false;
-                    }
-                    //Update the model with the current song
-                    mModel.setCurrentTrack(mCurrentTrack);
-                    //Prepare then play the current song
-                    prepareThenPlay(mCurrentTrack.getPrevUrl());
-                    return true;
+                    return false;
                 }
-            } catch (UnknownHostException e) {
-                Log.w(LOG_TAG, "Unknown host in playCurrent");
-                mp.reset();
-                handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
-            } catch (ConnectException e) {
-                Log.w(LOG_TAG, "Connect exception in playCurrent");
-                mp.reset();
-                handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "IOException on playlist entry " + mCurrentTrack.getTrackName(), e);
-                mp.reset();
-                handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
-            } catch (IllegalStateException e) {
-                Log.e(LOG_TAG, "Illegal state exception trying to play entry " + mCurrentTrack.getTrackName(), e);
-                mp.reset();
-                handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
+                //Update the model with the current song
+                mModel.setCurrentTrack(mCurrentTrack);
+                //Prepare then play the current song
+                prepareThenPlay(mCurrentTrack.getPrevUrl());
+                return true;
             }
+        } catch (UnknownHostException e) {
+            Log.w(LOG_TAG, "Unknown host in playCurrent");
+            mp.reset();
+            handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
+        } catch (ConnectException e) {
+            Log.w(LOG_TAG, "Connect exception in playCurrent");
+            mp.reset();
+            handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "IOException on playlist entry " + mCurrentTrack.getTrackName(), e);
+            mp.reset();
+            handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
+        } catch (IllegalStateException e) {
+            Log.e(LOG_TAG, "Illegal state exception trying to play entry " + mCurrentTrack.getTrackName(), e);
+            mp.reset();
+            handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
+        }
         return false;
     }
 
@@ -409,9 +420,29 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.Connection.ordinal());
                 break;
         }
-
+        if(mp.isPlaying())
+        StopProgressBar();
         getApplicationContext().sendBroadcast(intent);
     }
+
+
+    synchronized private int getPosition() {
+        if (isPrepared) {
+            return mp.getCurrentPosition();
+        }
+        return 0;
+    }
+
+
+    private void resumePlaying() {
+        L.m(LOG_TAG, "----------------------- Media Service  resumePlaying");
+        if (mp.isPlaying())
+            //I resume the progress bar
+            StartProgressBar();
+        // I resume the UI
+        updateUI();
+    }
+
 
 
     //Prepare then play a song using the url
@@ -428,9 +459,25 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             mp.setDataSource(url);
             mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
             L.m(LOG_TAG, "Preparing: " + url);
-            mp.prepareAsync();
+            if(isOnline()){
+                mp.prepareAsync();
+            }
+            else{
+                mp.reset();
+                handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
+            }
             L.m(LOG_TAG, "Waiting for prepare");
         }
+    }
+
+
+    /**
+     *  Check if we are online
+     */
+    protected boolean isOnline() {
+        ConnectivityManager cm = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return (netInfo != null && netInfo.isConnectedOrConnecting());
     }
 
 
@@ -438,9 +485,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private void startPlaying() {
         L.m(LOG_TAG, "StartPlaying: ");
         play();
-        //Update UI Elements
-        updateUI();
-        StartProgressBar();
+
     }
 
 
@@ -453,9 +498,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         L.m(LOG_TAG, "play " + mCurrentTrack.getTrackName());
         mp.start();
         mediaPlayerHasStarted = true;
+
+        // Start the progress bar
+        StartProgressBar();
+
+        //Update UI Elements
+        updateUI();
     }
-
-
 
     // Play previous track
     synchronized private void previous(){
@@ -549,7 +598,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 StartProgressBar();
             }
             //Update play pause buttons in the now playing screen
-            updatePlayPauseButton();
+            //updatePlayPauseButton();
+
+            //Update UI
+            updateUI();
         }
     }
 

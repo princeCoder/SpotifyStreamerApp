@@ -124,6 +124,9 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     // Intent
     private Intent mIntent;
 
+    //
+    private boolean isFirstTime=true;
+
     // Play/Pause Tag use to send a message to the service that we pressed the Play/Pause button
     public static String PLAY_PAUSE="RESET_PLAY_PAUSE";
 
@@ -373,14 +376,10 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-
-    @Override
     public void onStart() {
         super.onStart();
+
+        L.m(LOG_TAG, "------------------ Now Playing onStart--------------");
 
         updateUIReceiver = new MediaPlayerUpdateUIReceiver();
         progressBarStartReceiver = new MediaPlayerProgressBarStartReceiver();
@@ -487,9 +486,9 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         //Init Media player values
         initMediaPlayer();
 
-
         if(savedInstanceState==null){ // First time we open the view
             //Receive data from last fragment
+
             Bundle args=getArguments();
 
             if(args!=null){
@@ -507,15 +506,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
                 mModel.setCurrentTrack(mCurrentTrack);
             }
 
-            //Start playing the selected track
-            startSelectedTrack();
-        }
-        else{ // We just came back into the view
-            //Update UI elements
-            updateUI(mCurrentTrackIndex);
-
-            //Update the progress bar
-            updateProgressBar();
+            isFirstTime=true;
         }
 
         return rootView;
@@ -525,8 +516,8 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // TODO Auto-generated method stub
-        Dialog dialog= super.onCreateDialog(savedInstanceState);
 
+        Dialog dialog= super.onCreateDialog(savedInstanceState);
         dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 
         return dialog;
@@ -542,23 +533,23 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     @Override
     public void onResume() {
         super.onResume();
-        if (mp.isPlaying()){
-            //I resume the progress bar
-            updateProgressBar();
-            // I resume the UI
-            updateUI(mModel.getCurrentTrackIndex());
+        L.m(LOG_TAG, "Now Playing onResume ");
+        if(!isFirstTime){
+            Intent intent=new Intent(getActivity(),MediaPlayerService.class);
+                    intent.setAction(MediaPlayerService.MEDIASERVICE_RESUME_PLAYING);
+            getActivity().startService(intent);
         }
-
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
+        else {
+            //Start playing the selected track
+            isFirstTime=false;
+            startSelectedTrack();
+        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        L.m(LOG_TAG, "---------------Now Playing onStop-------------");
         mHandler.removeCallbacks(mUpdateTimeTask);
 
         //Unregister the receivers

@@ -8,7 +8,6 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -72,10 +71,6 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
 
     @Override
     public void onTrackSelectedListener(ArrayList<IElement>list, int position) {
-
-        Log.d(LOG_TAG," Track selected position "+position);
-
-
         Bundle args = new Bundle();
         args.putSerializable(NowPlayingFragment.LIST_TRACKS, list);
         args.putInt(NowPlayingFragment.TRACK_INDEX, position);

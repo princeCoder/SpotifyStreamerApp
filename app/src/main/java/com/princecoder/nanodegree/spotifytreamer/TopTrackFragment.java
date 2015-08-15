@@ -38,6 +38,9 @@ import retrofit.RetrofitError;
  */
 public class TopTrackFragment extends Fragment {
 
+    //Log element
+    public final String LOG_TAG =getClass().getSimpleName();
+
     // The ListView
     private ListView mTrackListView;
 
@@ -77,12 +80,6 @@ public class TopTrackFragment extends Fragment {
         } catch (ClassCastException e) {
             throw new ClassCastException(TAG + activity.getString(R.string.track_selected_class_cast_exception_message));
         }
-
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
@@ -115,6 +112,7 @@ public class TopTrackFragment extends Fragment {
         });
 
         if(savedInstanceState!=null){
+
             if(savedInstanceState.containsKey(TRACKS)){
                 try {
                     mTraks=(ArrayList<IElement>)savedInstanceState.getSerializable(TRACKS);
@@ -135,6 +133,7 @@ public class TopTrackFragment extends Fragment {
             Intent intent=getActivity().getIntent();
             if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
                 ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
+
                 new TopTrackAsyncTask().execute(artist.getSpotifyId());
             }
             else{ // We are in dual pane mode
@@ -173,7 +172,6 @@ public class TopTrackFragment extends Fragment {
     }
 
 
-
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -196,7 +194,6 @@ public class TopTrackFragment extends Fragment {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-
             if(isOnline()) {
                 mProgressDialog = new ProgressDialog(getActivity());
                 mProgressDialog.setTitle(getResources().getString(R.string.progress_dialog_message));
@@ -228,6 +225,7 @@ public class TopTrackFragment extends Fragment {
             mAdapter.clear();
             mTraks.clear();
             if (tracks == null || tracks.tracks.size() == 0) {
+                if(mProgressDialog!=null)
                 mProgressDialog.dismiss();
                 L.toast(getActivity(),getResources().getString(R.string.no_track));
             }
@@ -252,7 +250,6 @@ public class TopTrackFragment extends Fragment {
     }
 
     public interface OnTrackSelectedListener{
-
         void onTrackSelectedListener(ArrayList<IElement> list,int position);
     }
 
