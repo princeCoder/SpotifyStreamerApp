@@ -283,33 +283,40 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public void onCompletion(MediaPlayer mp) {
         Log.w(LOG_TAG, "onComplete()");
-        // check for repeat is ON or OFF
-        if(mModel.isRepeat()){
-            // repeat is on play same song again
-            playCurrent();
-        } else if(mModel.isShuffle()){
-            // shuffle is on - play a random song
-            Random rand = new Random();
-            int currentSongIndex = rand.nextInt(mListTracks.size());
-            mCurrentTrackIndex=currentSongIndex;
-            mModel.setCurrentSongIndex(mCurrentTrackIndex);
-            playCurrent();
-        } else{
-            // no repeat or shuffle ON - play next song
-            if(mCurrentTrackIndex < mListTracks.size() - 1){
-                int currentSongIndex = mCurrentTrackIndex + 1;
+        if(isOnline()){
+            // check for repeat is ON or OFF
+            if(mModel.isRepeat()){
+                // repeat is on play same song again
+                playCurrent();
+            } else if(mModel.isShuffle()){
+                // shuffle is on - play a random song
+                Random rand = new Random();
+                int currentSongIndex = rand.nextInt(mListTracks.size());
                 mCurrentTrackIndex=currentSongIndex;
                 mModel.setCurrentSongIndex(mCurrentTrackIndex);
-
                 playCurrent();
+            } else{
+                // no repeat or shuffle ON - play next song
+                if(mCurrentTrackIndex < mListTracks.size() - 1){
+                    int currentSongIndex = mCurrentTrackIndex + 1;
+                    mCurrentTrackIndex=currentSongIndex;
+                    mModel.setCurrentSongIndex(mCurrentTrackIndex);
+
+                    playCurrent();
 
 
-            }else{
-                // play first song
-                mCurrentTrackIndex=0;
-                mModel.setCurrentSongIndex(mCurrentTrackIndex);
-                playCurrent();
+                }else{
+                    // play first song
+                    mCurrentTrackIndex=0;
+                    mModel.setCurrentSongIndex(mCurrentTrackIndex);
+                    playCurrent();
+                }
             }
+        }
+        else {
+//            mp.reset();
+            handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
+//            StopProgressBar();
         }
     }
 
@@ -323,13 +330,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     synchronized private void pause() {
         L.m(LOG_TAG, "pause");
         if (isPrepared && mp.isPlaying()) {
-                L.m(LOG_TAG, "Pausing the media player");
-                mp.pause();
-                //Stop the progress bar
-                StopProgressBar();
+            L.m(LOG_TAG, "Pausing the media player");
+            mp.pause();
+            //Stop the progress bar
+            StopProgressBar();
 
-                //Update UI
-                updateUI();
+            //Update UI
+            updateUI();
         }
     }
 
@@ -348,8 +355,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public boolean onError(MediaPlayer mp, int what, int extra) {
         L.m(LOG_TAG, "Error:  " + what + " " + extra);
         //Reset the media Player
-        mp.reset();
-        handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
+        if(!isOnline()){
+            handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
+        }
+        else{
+            handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.MediaPlayer);
+        }
         return false;
     }
 
@@ -369,20 +380,22 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private boolean playCurrent() {
         try {
             if(mModel!=null){
-                mCurrentTrack=mListTracks.get(mCurrentTrackIndex);
-                if (mCurrentTrack == null || mCurrentTrack.getPrevUrl() == null) {
-                    mp.reset();
-                    Intent intent = new Intent(SERVICE_ERROR_NAME);
-                    intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal());
-                    getApplicationContext().sendBroadcast(intent);
+                if(mCurrentTrackIndex<mListTracks.size()){
+                    mCurrentTrack=mListTracks.get(mCurrentTrackIndex);
+                    if (mCurrentTrack == null || mCurrentTrack.getPrevUrl() == null) {
+                        mp.reset();
+                        Intent intent = new Intent(SERVICE_ERROR_NAME);
+                        intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal());
+                        getApplicationContext().sendBroadcast(intent);
 
-                    return false;
+                        return false;
+                    }
+                    //Update the model with the current song
+                    mModel.setCurrentTrack(mCurrentTrack);
+                    //Prepare then play the current song
+                    prepareThenPlay(mCurrentTrack.getPrevUrl());
+                    return true;
                 }
-                //Update the model with the current song
-                mModel.setCurrentTrack(mCurrentTrack);
-                //Prepare then play the current song
-                prepareThenPlay(mCurrentTrack.getPrevUrl());
-                return true;
             }
         } catch (UnknownHostException e) {
             Log.w(LOG_TAG, "Unknown host in playCurrent");
@@ -420,8 +433,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 intent.putExtra(EXTRA_ERROR, MEDIAPLAYER_SERVICE_ERROR.Connection.ordinal());
                 break;
         }
-        if(mp.isPlaying())
-        StopProgressBar();
         getApplicationContext().sendBroadcast(intent);
     }
 
@@ -459,13 +470,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             mp.setDataSource(url);
             mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
             L.m(LOG_TAG, "Preparing: " + url);
-            if(isOnline()){
-                mp.prepareAsync();
-            }
-            else{
-                mp.reset();
-                handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
-            }
+            mp.prepareAsync();
             L.m(LOG_TAG, "Waiting for prepare");
         }
     }
@@ -508,35 +513,43 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     // Play previous track
     synchronized private void previous(){
-        if(mCurrentTrackIndex > 0){
-            int currentSongIndex = mCurrentTrackIndex - 1;
-            mCurrentTrackIndex=currentSongIndex;
-            mModel.setCurrentSongIndex(currentSongIndex);
-        }else{
-            mModel.setCurrentSongIndex(mListTracks.size() - 1);
+        if(isOnline()){
+            if(mCurrentTrackIndex > 0){
+                int currentSongIndex = mCurrentTrackIndex - 1;
+                mCurrentTrackIndex=currentSongIndex;
+                mModel.setCurrentSongIndex(currentSongIndex);
+            }else{
+                mModel.setCurrentSongIndex(mListTracks.size() - 1);
+            }
+            playCurrent();
         }
-        playCurrent();
-
-        //Todo update NowPlaying Screen
+        else{
+            handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
+        }
     }
 
     //Play next song
     synchronized private void next(){
-        // check if next song is there or not
-        if(mCurrentTrackIndex < (mListTracks.size() - 1)){
-            int currentSongIndex = mCurrentTrackIndex + 1;
-            mCurrentTrackIndex=currentSongIndex;
-            mModel.setCurrentSongIndex(mCurrentTrackIndex);
+        if(isOnline()){
+            // check if next song is there or not
+            if(mCurrentTrackIndex < (mListTracks.size() - 1)){
+                int currentSongIndex = mCurrentTrackIndex + 1;
+                mCurrentTrackIndex=currentSongIndex;
+                mModel.setCurrentSongIndex(mCurrentTrackIndex);
 
-        }else{
-            // play first song
-            mModel.setCurrentSongIndex(0);
-            mCurrentTrackIndex=0;
-            mModel.setCurrentSongIndex(mCurrentTrackIndex);
+            }else{
+                // play first song
+                mModel.setCurrentSongIndex(0);
+                mCurrentTrackIndex=0;
+                mModel.setCurrentSongIndex(mCurrentTrackIndex);
+            }
+
+            //Play the current song
+            playCurrent();
         }
-
-        //Play the current song
-        playCurrent();
+        else{
+            handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
+        }
     }
 
     //Send  a broacast to the Now playing screen to update the play/Pause button

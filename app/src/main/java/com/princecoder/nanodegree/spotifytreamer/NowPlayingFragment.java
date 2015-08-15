@@ -614,7 +614,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
             if(!isOnline()){
                 message = context.getString(R.string.msg_playback_connection_error);
                 L.m(LOG_TAG, "Not connected to internet");
-                L.toast(context,message);
+                L.toast(context, message);
             }
             else{
                 int error = intent.getIntExtra(MediaPlayerService.EXTRA_ERROR, -1);
@@ -623,23 +623,12 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
                     message = context.getString(R.string.msg_playback_error);
                 } else if (error == MediaPlayerService.MEDIAPLAYER_SERVICE_ERROR.InvalidTrack.ordinal()) {
                     message = context.getString(R.string.msg_playback_invalid_track_error);
-                    resetProgressBar();
-                }
-                else if (error == MediaPlayerService.MEDIAPLAYER_SERVICE_ERROR.Connection.ordinal()) {
-                    message = context.getString(R.string.msg_playback_connection_error);
                 }
                 L.m(LOG_TAG,message);
             }
+            resetPlayPauseButton();
         }
     }
-
-
-    // reset progressBar
-    private void resetProgressBar() {
-        songProgressBar.setProgress(0);
-        songProgressBar.setSecondaryProgress(0);
-    }
-
 
 
     private class MediaPlayerUpdateUIReceiver extends BroadcastReceiver {

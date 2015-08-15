@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -107,49 +108,40 @@ public class TopTrackFragment extends Fragment {
                 // Let the activity do the job for us
                 // We have the list of tracks to play and the selected track by the user
                 mListener.onTrackSelectedListener(mTraks, position);
-                mPosition=position;
+                mPosition = position;
             }
         });
-
-        if(savedInstanceState!=null){
-
-            if(savedInstanceState.containsKey(TRACKS)){
-                try {
-                    mTraks=(ArrayList<IElement>)savedInstanceState.getSerializable(TRACKS);
-                    mAdapter=new TrackAdapter(getActivity(),R.layout.track_row_item,R.id.topTxt,mTraks);
-                } catch (ClassCastException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            if (savedInstanceState.containsKey(SELECTED_KEY)) {
-                mPosition = savedInstanceState.getInt(SELECTED_KEY);
-                if (mPosition != ListView.INVALID_POSITION) {
-                    mTrackListView.smoothScrollToPosition(mPosition);
-                }
-
-            }
-        }else{
-            Intent intent=getActivity().getIntent();
-            if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
-                ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
-
-                new TopTrackAsyncTask().execute(artist.getSpotifyId());
-            }
-            else{ // We are in dual pane mode
-                Bundle args=getArguments();
-                if(args!=null){
-                    mArtist = (ArtistModel)args.getSerializable(SELECTED_ARTIST);
-                    new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
-                }
-            }
-        }
 
         // Set the adapter
         mTrackListView.setAdapter(mAdapter);
 
+        Intent intent=getActivity().getIntent();
+        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
+            ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
+
+            new TopTrackAsyncTask().execute(artist.getSpotifyId());
+        }
+        else{ // We are in dual pane mode
+            Bundle args=getArguments();
+            if(args!=null){
+                mArtist = (ArtistModel)args.getSerializable(SELECTED_ARTIST);
+                new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
+            }
+        }
+
         // Inflate the layout for this fragment
         return rootView;
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        L.m(LOG_TAG,"------------- Top Track fragment   New Configurations -------------");
+        mTrackListView.setAdapter(mAdapter);
+        if (mPosition != ListView.INVALID_POSITION) {
+            mTrackListView.smoothScrollToPosition(mPosition);
+        }
+
     }
 
     public TrackAdapter getAdapter(){
@@ -167,18 +159,14 @@ public class TopTrackFragment extends Fragment {
     }
 
     // If the user selected a new Artist
-    public void onArtistChange(String spotifyId){
-        new TopTrackAsyncTask().execute(spotifyId);
-    }
-
+//    public void onArtistChange(String spotifyId){
+//        new TopTrackAsyncTask().execute(spotifyId);
+//    }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if(mPosition!=ListView.INVALID_POSITION){
-            outState.putInt(SELECTED_KEY,mPosition);
-        }
-        outState.putSerializable(TRACKS,mTraks);
+    public void onResume() {
+        super.onResume();
+        L.m(TAG, "------------- TopTrackFragment onResume --------------");
     }
 
     /**
@@ -225,8 +213,8 @@ public class TopTrackFragment extends Fragment {
             mAdapter.clear();
             mTraks.clear();
             if (tracks == null || tracks.tracks.size() == 0) {
-                if(mProgressDialog!=null)
-                mProgressDialog.dismiss();
+                if(mProgressDialog!=null && mProgressDialog.isShowing())
+                    mProgressDialog.dismiss();
                 L.toast(getActivity(),getResources().getString(R.string.no_track));
             }
             else{
@@ -243,7 +231,7 @@ public class TopTrackFragment extends Fragment {
                     mTraks.add(t);
                 }
                 // dismiss the progress dialog
-                if (mProgressDialog!=null)
+                if (mProgressDialog!=null && mProgressDialog.isShowing())
                     mProgressDialog.dismiss();
             }
         }

@@ -41,9 +41,6 @@ public class HomeFragment extends Fragment {
     // ListView to display artists
     private ListView mListView;
 
-    // List of Artists
-    private ArrayList<IElement> mListOfArtist=new ArrayList<>();
-
     // My adapter
     private ArtistAdapter mAdapter;
 
@@ -51,24 +48,17 @@ public class HomeFragment extends Fragment {
     private final String TAG=getClass().getSimpleName();
 
     // EditText for enter artist name
-    private android.support.v7.widget.SearchView mSearchText;
+    private SearchView mSearchText;
 
     //Listener
     private OnArtistSelectedListener mListener;
 
     //Position
-    private int mPosition;
+    private int mPosition;;
 
-    //Selected item
-    private final String SELECTED_KEY="SELECTED_KEY";
-
-    //List_TAG
-
-    private final String LIST_TAG="List";
-
-    public HomeFragment() {
-        // Required empty public constructor
-    }
+//    public HomeFragment() {
+//        // Required empty public constructor
+//    }
 
     @Override
     public void onAttach(Activity activity) {
@@ -139,8 +129,7 @@ public class HomeFragment extends Fragment {
             @Override
             public boolean onQueryTextChange(String s) {
                 if (s.isEmpty()) {
-                    mListOfArtist.clear();
-                    mAdapter.notifyDataSetChanged();
+                    mAdapter.clear();
                     mListener.onArtistSelectedListener(null);
                 }
                 return false;
@@ -148,68 +137,38 @@ public class HomeFragment extends Fragment {
         });
 
 
-            return myView;
-        }
+        //Initialize the adapter
+        mAdapter = new ArtistAdapter(getActivity(), R.layout.artist_row_item, R.id.topTxt, new ArrayList<IElement>());
+
+        // Set the adapter
+        mListView.setAdapter(mAdapter);
+
+        mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
+        return myView;
+    }
 
 
-        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-        @Override
-        public void onActivityCreated(Bundle savedInstanceState) {
-            super.onActivityCreated(savedInstanceState);
-
-            if (savedInstanceState!=null) {
-                if (savedInstanceState.containsKey(SELECTED_KEY)) {
-                    mPosition = savedInstanceState.getInt(SELECTED_KEY);
-                }
-
-                if (savedInstanceState.containsKey(LIST_TAG)) {
-                    try {
-                        mListOfArtist= (ArrayList<IElement>) savedInstanceState.getSerializable(LIST_TAG);
-                    } catch (ClassCastException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            if (mPosition != ListView.INVALID_POSITION) {
-                mListView.smoothScrollToPosition(mPosition);
-            }
-
-            //Initialize the adapter
-            mAdapter = new ArtistAdapter(getActivity(), R.layout.artist_row_item, R.id.topTxt, mListOfArtist);
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
 
 
-            // Set the adapter
-            mListView.setAdapter(mAdapter);
-
-            mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-
-            setRetainInstance(true);
-        }
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mListView.setAdapter(mAdapter);
+    }
 
 
-        @Override
-        public void onSaveInstanceState(Bundle outState) {
-            if(mPosition!=ListView.INVALID_POSITION){
-                outState.putInt(SELECTED_KEY,mPosition);
-            }
-            outState.putSerializable(LIST_TAG, mListOfArtist);
-            super.onSaveInstanceState(outState);
-        }
-
-
-        @Override
-        public void onConfigurationChanged(Configuration newConfig) {
-            super.onConfigurationChanged(newConfig);
-            mListView.setAdapter(mAdapter);
-        }
-
-
-        /**
-         * Are we online?
-         *
-         * @return boolean
-         *
-         */
+    /**
+     * Are we online?
+     *
+     * @return boolean
+     *
+     */
     protected boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
@@ -268,12 +227,12 @@ public class HomeFragment extends Fragment {
                     }
                     mAdapter.add(artist);
                 }
-                if (mProgressDialog!=null)
+                if (mProgressDialog!=null && mProgressDialog.isShowing())
                     mProgressDialog.dismiss();
             }
             else{
                 // I dismiss the progress dialog
-                if (mProgressDialog!=null)
+                if (mProgressDialog!=null && mProgressDialog.isShowing())
                     mProgressDialog.dismiss();
 
                 // I notify the user no data has been found
