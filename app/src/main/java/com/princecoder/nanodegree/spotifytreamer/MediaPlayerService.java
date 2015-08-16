@@ -600,16 +600,22 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         // check for already playing
         if (mp!=null) {
             if (mp.isPlaying()) {
-                L.m(LOG_TAG, "Pausing the media player");
-                mp.pause();
-                StopProgressBar();
+//                L.m(LOG_TAG, "Pausing the media player");
+//                mp.pause();
+//                StopProgressBar();
+//
+//
+                pause();
             }
             else{
 
                 if(isOnline()){
-                    L.m(LOG_TAG, "Resume the media player");
-                    mp.start();
-                    StartProgressBar();
+//                    L.m(LOG_TAG, "Resume the media player");
+//                    mp.start();
+//                    StartProgressBar();
+
+
+                    play();
                 }
                 else {
                     handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);

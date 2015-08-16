@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -313,6 +314,8 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         getActivity().startService(intent);
     }
 
+
+
     /**
      *  Perform an action depending on which button the user has clicked
      * @param v the button
@@ -519,6 +522,11 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         return rootView;
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+    }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -693,6 +701,14 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
                 updateProgressBar();
             }
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (getDialog() != null && getRetainInstance()) {
+            getDialog().setDismissMessage(null);
+        }
+        super.onDestroyView();
     }
 
     private class MediaPlayerProgressBarStopReceiver extends BroadcastReceiver {

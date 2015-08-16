@@ -56,9 +56,6 @@ public class HomeFragment extends Fragment {
     //Position
     private int mPosition;;
 
-//    public HomeFragment() {
-//        // Required empty public constructor
-//    }
 
     @Override
     public void onAttach(Activity activity) {
@@ -145,6 +142,11 @@ public class HomeFragment extends Fragment {
 
         mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
+
+        if(savedInstanceState!=null){
+
+        }
+
         return myView;
     }
 
@@ -162,6 +164,11 @@ public class HomeFragment extends Fragment {
         mListView.setAdapter(mAdapter);
     }
 
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
 
     /**
      * Are we online?
