@@ -205,10 +205,10 @@ public class TopTrackFragment extends Fragment {
                 mProgressDialog.show();
             }else{
                 L.m(TAG,getResources().getString(R.string.no_internet));
-                // I dismiss the progress dialog
-                if(mProgressDialog!=null && mProgressDialog.isShowing())
-                mProgressDialog.dismiss();
                 L.toast(getActivity(),getResources().getString(R.string.no_internet));
+                // dismiss the progress dialog
+                if (mProgressDialog!=null && mProgressDialog.isShowing())
+                    mProgressDialog.dismiss();
             }
         }
 
@@ -216,8 +216,14 @@ public class TopTrackFragment extends Fragment {
         protected Tracks doInBackground(String... params) {
             HashMap<String,Object> queryString = new HashMap<>();
             try{
-                queryString.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
-                return  mSpotifyService.getArtistTopTrack(params[0], queryString);
+                if(isOnline()){
+                    queryString.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
+                    return  mSpotifyService.getArtistTopTrack(params[0], queryString);
+                }
+                else{
+                    L.toast(getActivity(),getResources().getString(R.string.no_internet));
+                    return null;
+                }
             }
             catch (RetrofitError error){
                 L.m(TAG,error.getMessage());
@@ -230,9 +236,10 @@ public class TopTrackFragment extends Fragment {
         protected void onPostExecute(Tracks tracks) {
             mAdapter.clear();
             if (tracks == null || tracks.tracks.size() == 0) {
-                if(mProgressDialog!=null && mProgressDialog.isShowing())
-                    mProgressDialog.dismiss();
+                if(isOnline())
                 L.toast(getActivity(),getResources().getString(R.string.no_track));
+                else
+                    L.toast(getActivity(),getResources().getString(R.string.no_internet));
             }
             else{
                 for (Track track : tracks.tracks) {
@@ -246,10 +253,10 @@ public class TopTrackFragment extends Fragment {
                     }
                     mAdapter.add(t);
                 }
-                // dismiss the progress dialog
-                if (mProgressDialog!=null && mProgressDialog.isShowing())
-                    mProgressDialog.dismiss();
             }
+            // dismiss the progress dialog
+            if (mProgressDialog!=null && mProgressDialog.isShowing())
+                mProgressDialog.dismiss();
         }
     }
 
