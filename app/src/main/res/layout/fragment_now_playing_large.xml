@@ -44,7 +44,7 @@
                 android:marqueeRepeatLimit="marquee_forever"
                 android:scrollHorizontally="true"
                 android:focusable="true"
-                android:focusableInTouchMogit de="true"
+                android:focusableInTouchMode="true"
                 android:freezesText="true"
                 android:layout_marginTop="10dp"/>
 
