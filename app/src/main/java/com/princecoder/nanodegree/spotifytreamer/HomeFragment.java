@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -188,14 +187,6 @@ public class HomeFragment extends Fragment {
         outState.putSerializable(LIST_TAG,mListOfArtist);
         super.onSaveInstanceState(outState);
     }
-
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        mListView.setAdapter(mAdapter);
-    }
-
 
     /**
      * Are we online?

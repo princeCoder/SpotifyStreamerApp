@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -60,6 +59,12 @@ public class TopTrackFragment extends Fragment {
     //Position
     private int mPosition;
 
+    //Position Tag
+    private static final String SELECTED_TRACK="SELECTED_TRACK";
+
+    // Track tag
+    private static final String TRACKS="TRACKS";
+
     //Artist Tag
     public static final String SELECTED_ARTIST="SELECTED_ARTIST";
 
@@ -105,31 +110,58 @@ public class TopTrackFragment extends Fragment {
         // Set the adapter
         mTrackListView.setAdapter(mAdapter);
 
-        Intent intent=getActivity().getIntent();
-        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
-            ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
+        if(savedInstanceState!=null){
 
-            new TopTrackAsyncTask().execute(artist.getSpotifyId());
-        }
-        else{ // We are in dual pane mode
-            Bundle args=getArguments();
-            if(args!=null){
-                mArtist = (ArtistModel)args.getSerializable(SELECTED_ARTIST);
-                new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
+            if(savedInstanceState.containsKey(SELECTED_ARTIST)) {
+                mArtist = (ArtistModel) savedInstanceState.getSerializable(SELECTED_ARTIST);
+                mAdapter.clear();
             }
+            if(savedInstanceState.containsKey(TRACKS)) {
+                mAdapter.setElements((ArrayList<IElement>) savedInstanceState.getSerializable(TRACKS));
+            }
+            if(savedInstanceState.containsKey(SELECTED_TRACK)) {
+                mPosition=savedInstanceState.getInt(SELECTED_TRACK);
+                if (mPosition != ListView.INVALID_POSITION) {
+                    mTrackListView.smoothScrollToPosition(mPosition);
+                }
+            }
+
         }
+        else{
+
+            Intent intent=getActivity().getIntent();
+            if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
+                ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
+                new TopTrackAsyncTask().execute(artist.getSpotifyId());
+            }
+            else{ // We are in dual pane mode
+                Bundle args=getArguments();
+                if(args!=null){
+                    mArtist = (ArtistModel)args.getSerializable(SELECTED_ARTIST);
+                    new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
+                }
+            }
+
+        }
+
+
 
         // Inflate the layout for this fragment
         return rootView;
     }
 
+
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        L.m(LOG_TAG,"------------- Top Track fragment   New Configurations -------------");
-        mTrackListView.setAdapter(mAdapter);
-        if (mPosition != ListView.INVALID_POSITION) {
-            mTrackListView.smoothScrollToPosition(mPosition);
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        //I save the current artist and his tracks
+
+        outState.putSerializable(SELECTED_ARTIST,mArtist);
+        outState.putSerializable(TRACKS,mAdapter.getElements());
+
+        //I save the current position
+        if(mPosition!=ListView.INVALID_POSITION){
+            outState.putInt(SELECTED_TRACK,mPosition);
         }
 
     }
@@ -147,11 +179,6 @@ public class TopTrackFragment extends Fragment {
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         return (netInfo != null && netInfo.isConnectedOrConnecting());
     }
-
-    // If the user selected a new Artist
-//    public void onArtistChange(String spotifyId){
-//        new TopTrackAsyncTask().execute(spotifyId);
-//    }
 
     @Override
     public void onResume() {
@@ -179,6 +206,7 @@ public class TopTrackFragment extends Fragment {
             }else{
                 L.m(TAG,getResources().getString(R.string.no_internet));
                 // I dismiss the progress dialog
+                if(mProgressDialog!=null && mProgressDialog.isShowing())
                 mProgressDialog.dismiss();
                 L.toast(getActivity(),getResources().getString(R.string.no_internet));
             }
