@@ -330,10 +330,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         L.m(LOG_TAG, "pause");
         if (isPrepared && mp.isPlaying()) {
             L.m(LOG_TAG, "Pausing the media player");
-            mp.pause();
+
             //Stop the progress bar
             StopProgressBar();
-
+            mp.pause();
             //Update UI
             updateUI();
         }
@@ -344,9 +344,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         L.m(LOG_TAG, "stop");
         if (isPrepared) {
             isPrepared = false;
-            mp.stop();
             // Send a broadcast to the Now Playing to stop the handler
             StopProgressBar();
+            mp.stop();
+
         }
     }
 
@@ -600,21 +601,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         // check for already playing
         if (mp!=null) {
             if (mp.isPlaying()) {
-//                L.m(LOG_TAG, "Pausing the media player");
-//                mp.pause();
-//                StopProgressBar();
-//
-//
                 pause();
             }
             else{
-
                 if(isOnline()){
-//                    L.m(LOG_TAG, "Resume the media player");
-//                    mp.start();
-//                    StartProgressBar();
-
-
                     play();
                 }
                 else {

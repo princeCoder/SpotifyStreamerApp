@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Configuration;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -95,8 +94,6 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
     //My Current Tracks
     private TrackModel mCurrentTrack =new TrackModel();
-
-    private int mCurrentTrackIndex;
 
     //List of tracks
     private ArrayList<TrackModel>mListTracks=new ArrayList<>();
@@ -228,9 +225,6 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
         //Get the current track
         mCurrentTrack =mModel.getCurrentTrack();
-
-        //get the current track index
-        mCurrentTrackIndex=mModel.getCurrentTrackIndex();
 
         //Get the list of tracks
         mListTracks=mModel.getTrackList();
@@ -389,8 +383,6 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     public void onStart() {
         super.onStart();
 
-        L.m(LOG_TAG, "------------------ Now Playing onStart--------------");
-
         updateUIReceiver = new MediaPlayerUpdateUIReceiver();
         progressBarStartReceiver = new MediaPlayerProgressBarStartReceiver();
         progressBarStopReceiver = new MediaPlayerProgressBarStopReceiver();
@@ -523,12 +515,6 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-    }
-
-    @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // TODO Auto-generated method stub
 
@@ -542,6 +528,8 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        // The disalog should not be destroy
         setRetainInstance(true);
     }
 
@@ -551,7 +539,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         L.m(LOG_TAG, "Now Playing onResume ");
         if(!isFirstTime){
             Intent intent=new Intent(getActivity(),MediaPlayerService.class);
-                    intent.setAction(MediaPlayerService.MEDIASERVICE_RESUME_PLAYING);
+            intent.setAction(MediaPlayerService.MEDIASERVICE_RESUME_PLAYING);
             getActivity().startService(intent);
         }
         else {
@@ -669,7 +657,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         @Override
         public void onReceive(Context context, Intent intent) {
             if(intent!=null){
-               resetPlayPauseButton();
+                resetPlayPauseButton();
             }
         }
     }
