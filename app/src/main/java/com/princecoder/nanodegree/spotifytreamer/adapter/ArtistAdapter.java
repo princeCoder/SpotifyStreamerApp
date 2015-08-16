@@ -50,6 +50,15 @@ public class ArtistAdapter extends ArrayAdapter<IElement> {
         return mElements.size();
     }
 
+
+    public ArrayList<IElement> getElements() {
+        return mElements;
+    }
+
+    public void setElements(ArrayList<IElement> mElements) {
+        this.mElements = mElements;
+    }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         // TODO Auto-generated method stub
