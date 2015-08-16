@@ -143,9 +143,7 @@ public class HomeFragment extends Fragment {
         mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
 
-        if(savedInstanceState!=null){
 
-        }
 
         return myView;
     }
