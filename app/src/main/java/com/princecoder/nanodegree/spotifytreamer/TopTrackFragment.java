@@ -133,8 +133,12 @@ public class TopTrackFragment extends Fragment {
             if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
                 ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
                 new TopTrackAsyncTask().execute(artist.getSpotifyId());
+
+                L.m(LOG_TAG,"------------ We are in single pane mode -----------------");
             }
             else{ // We are in dual pane mode
+
+                L.m(LOG_TAG,"------------ We are in Dual pane mode -----------------");
                 Bundle args=getArguments();
                 if(args!=null){
                     mArtist = (ArtistModel)args.getSerializable(SELECTED_ARTIST);
