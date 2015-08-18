@@ -65,7 +65,9 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
 
         //Set the title of the actionBar
         getSupportActionBar().setTitle("Top tracks");
-        getSupportActionBar().setSubtitle(artist.getName());
+        if(artist!=null){
+            getSupportActionBar().setSubtitle(artist.getName());
+        }
     }
 
     @Override

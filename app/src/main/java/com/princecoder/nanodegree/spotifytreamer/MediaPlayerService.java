@@ -1,5 +1,8 @@
 package com.princecoder.nanodegree.spotifytreamer;
 
+import android.annotation.TargetApi;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +10,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -14,6 +18,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
+import android.support.v7.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -351,6 +356,46 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
     }
 
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    private void displayNotification(){
+
+        // Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(this, MediaPlayerService.class);
+        PendingIntent resultPendingIntent=PendingIntent.getService(this,0,resultIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Builder mBuilder =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        .setContentTitle(getResources().getString(R.string.app_name))
+                        .setContentText(mModel.getCurrentTrack().getTrackName())
+                        .setSmallIcon(R.mipmap.ic_launcher).setAutoCancel(true).setContentIntent(resultPendingIntent);
+
+
+        //Previous intent
+        Intent previousIntent = new Intent(this, MediaPlayerService.class);
+        previousIntent.setAction(MEDIASERVICE_PREVIOUS);
+        PendingIntent pendingIntentPrevious = PendingIntent.getService(this, 0, previousIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.addAction(R.mipmap.img_btn_previous, "Previous", pendingIntentPrevious);
+
+        //Play/Pause intent
+        Intent playPauseIntent = new Intent(this, MediaPlayerService.class);
+        playPauseIntent.setAction(MEDIASERVICE_PLAYPAUSE);
+        PendingIntent pendingIntentPlayPause = PendingIntent.getService(this, 0, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.addAction(R.mipmap.img_btn_play, "Play/Pause", pendingIntentPlayPause);
+
+        //Next intent
+        Intent nextIntent = new Intent(this, MediaPlayerService.class);
+        nextIntent.setAction(MEDIASERVICE_NEXT);
+        PendingIntent pendingIntentNext = PendingIntent.getService(this, 0, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.addAction(R.mipmap.img_btn_next, "Next", pendingIntentNext);
+
+
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        notificationManager.notify(0,mBuilder.build());
+    }
+
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         L.m(LOG_TAG, "Error:  " + what + " " + extra);
@@ -503,6 +548,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         L.m(LOG_TAG, "play " + mCurrentTrack.getTrackName());
         mp.start();
         mediaPlayerHasStarted = true;
+
+        // Display the notification
+        displayNotification();
 
         // Start the progress bar
         StartProgressBar();
