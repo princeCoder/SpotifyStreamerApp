@@ -10,6 +10,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -408,6 +409,11 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
 
         // Inflate the layout for this fragment
         View rootView= inflater.inflate(R.layout.fragment_now_playing, null);
+
+        if (android.os.Build.VERSION.SDK_INT > 9) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
 
         // All player buttons
         btnPlayPause = (ImageButton) rootView.findViewById(R.id.btnPlay);
