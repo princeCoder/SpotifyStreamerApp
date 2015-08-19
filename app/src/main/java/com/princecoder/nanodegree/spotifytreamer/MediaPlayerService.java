@@ -6,6 +6,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
@@ -22,13 +24,17 @@ import android.support.v7.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.model.TrackModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Random;
@@ -333,12 +339,18 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     //Pause the Media player
     synchronized private void pause() {
         L.m(LOG_TAG, "pause");
+
         if (isPrepared && mp.isPlaying()) {
             L.m(LOG_TAG, "Pausing the media player");
 
             //Stop the progress bar
             StopProgressBar();
             mp.pause();
+
+            mModel.setPause(true);
+
+            displayNotification();
+
             //Update UI
             updateUI();
         }
@@ -356,45 +368,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
     }
 
-
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    private void displayNotification(){
-
-        // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(this, MediaPlayerService.class);
-        PendingIntent resultPendingIntent=PendingIntent.getService(this,0,resultIntent,PendingIntent.FLAG_UPDATE_CURRENT);
-
-        NotificationCompat.Builder mBuilder =
-                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                        .setContentTitle(getResources().getString(R.string.app_name))
-                        .setContentText(mModel.getCurrentTrack().getTrackName())
-                        .setSmallIcon(R.mipmap.ic_launcher).setAutoCancel(true).setContentIntent(resultPendingIntent);
-
-
-        //Previous intent
-        Intent previousIntent = new Intent(this, MediaPlayerService.class);
-        previousIntent.setAction(MEDIASERVICE_PREVIOUS);
-        PendingIntent pendingIntentPrevious = PendingIntent.getService(this, 0, previousIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        mBuilder.addAction(R.mipmap.img_btn_previous, "Previous", pendingIntentPrevious);
-
-        //Play/Pause intent
-        Intent playPauseIntent = new Intent(this, MediaPlayerService.class);
-        playPauseIntent.setAction(MEDIASERVICE_PLAYPAUSE);
-        PendingIntent pendingIntentPlayPause = PendingIntent.getService(this, 0, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        mBuilder.addAction(R.mipmap.img_btn_play, "Play/Pause", pendingIntentPlayPause);
-
-        //Next intent
-        Intent nextIntent = new Intent(this, MediaPlayerService.class);
-        nextIntent.setAction(MEDIASERVICE_NEXT);
-        PendingIntent pendingIntentNext = PendingIntent.getService(this, 0, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        mBuilder.addAction(R.mipmap.img_btn_next, "Next", pendingIntentNext);
-
-
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        notificationManager.notify(0,mBuilder.build());
-    }
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
@@ -547,6 +520,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
         L.m(LOG_TAG, "play " + mCurrentTrack.getTrackName());
         mp.start();
+
+        mModel.setPause(false);
         mediaPlayerHasStarted = true;
 
         // Display the notification
@@ -650,6 +625,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (mp!=null) {
             if (mp.isPlaying()) {
                 pause();
+                mModel.setPause(true);
             }
             else{
                 if(isOnline()){
@@ -740,6 +716,126 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (isPrepared) {
             mp.seekTo(pos);
             StartProgressBar();
+        }
+    }
+
+
+    public static Bitmap getBitmapFromURL(String src) {
+        try {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            // Log exception
+            return null;
+        }
+    }
+
+    public static Bitmap scaleDown(Bitmap realImage, float maxImageSize,
+                                   boolean filter) {
+        float ratio = Math.min(
+                (float) maxImageSize / realImage.getWidth(),
+                (float) maxImageSize / realImage.getHeight());
+        int width = Math.round((float) ratio * realImage.getWidth());
+        int height = Math.round((float) ratio * realImage.getHeight());
+
+        Bitmap newBitmap = Bitmap.createScaledBitmap(realImage, width,
+                height, filter);
+        return newBitmap;
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    private synchronized void displayNotification(){
+
+        // Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(this, MediaPlayerService.class);
+        PendingIntent resultPendingIntent=PendingIntent.getService(this,0,resultIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+        RemoveControlWidget remoteView = new RemoveControlWidget(getApplicationContext(),getApplicationContext().getPackageName(), R.layout.notification_content);
+        remoteView.setOnClickPendingIntent(R.id.normal, resultPendingIntent);
+
+        // L.m(LOG_TAG, "-------------------------  "+mModel.getCurrentTrack().getThumb()+" -------------------------");
+
+        Bitmap image = getBitmapFromURL(mModel.getCurrentTrack().getThumb());
+        remoteView.setImageViewBitmap(R.id.AppThumb,image);
+        //removeWidget.setImageViewResource(R.id.AppThumb,R.mipmap.ic_launcher);
+        remoteView.setTextViewText(R.id.songTitle, mModel.getCurrentTrack().getTrackName());
+        if(mModel.isPaused()){
+            remoteView.setImageViewResource(R.id.btnPlay, R.mipmap.img_btn_play);
+        }
+        else {
+            remoteView.setImageViewResource(R.id.btnPlay, R.mipmap.img_btn_pause);
+        }
+
+        NotificationCompat.Builder mBuilder =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        .setContentTitle(getResources().getString(R.string.app_name))
+                        .setContentText(mModel.getCurrentTrack().getTrackName())
+                        .setSmallIcon(R.mipmap.ic_launcher).setAutoCancel(true)
+                        .setContentIntent(resultPendingIntent)
+                        .setContent(remoteView);
+
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        notificationManager.notify(0,mBuilder.build());
+    }
+
+
+
+    public class RemoveControlWidget extends RemoteViews
+    {
+        private final Context mContext;
+
+        public static final String ACTION_PLAY_PAUSE = MEDIASERVICE_PLAYPAUSE;
+
+        public static final String ACTION_PREVIOUS = MEDIASERVICE_PREVIOUS;
+
+        public static final String ACTION_NEXT = MEDIASERVICE_NEXT;
+
+        public static final String ACTION_BACKWARD = MEDIASERVICE_BACKWARD;
+
+        public static final String ACTION_FORWARD = MEDIASERVICE_FORWARD;
+
+
+        public RemoveControlWidget(Context context , String packageName, int layoutId)
+        {
+            super(packageName, layoutId);
+            mContext = context;
+            Intent intent = new Intent(getApplicationContext(), MediaPlayerService.class);
+
+            intent.setAction(ACTION_PLAY_PAUSE);
+            PendingIntent pendingIntent = PendingIntent.getService(mContext.getApplicationContext(),100,
+                    intent,PendingIntent.FLAG_UPDATE_CURRENT);
+            setOnClickPendingIntent(R.id.btnPlay, pendingIntent);
+
+
+            intent.setAction(ACTION_PREVIOUS);
+            pendingIntent = PendingIntent.getService(mContext.getApplicationContext(),101,
+                    intent,PendingIntent.FLAG_UPDATE_CURRENT);
+            setOnClickPendingIntent(R.id.btnPrevious, pendingIntent);
+
+            intent.setAction(ACTION_NEXT);
+            pendingIntent = PendingIntent.getService(mContext.getApplicationContext(),102,
+                    intent,PendingIntent.FLAG_UPDATE_CURRENT);
+            setOnClickPendingIntent(R.id.btnNext, pendingIntent);
+
+            intent.setAction(ACTION_BACKWARD);
+            pendingIntent = PendingIntent.getService(mContext.getApplicationContext(),103,
+                    intent,PendingIntent.FLAG_UPDATE_CURRENT);
+            setOnClickPendingIntent(R.id.btnBackward, pendingIntent);
+
+            intent.setAction(ACTION_FORWARD);
+            pendingIntent = PendingIntent.getService(mContext.getApplicationContext(),104,
+                    intent,PendingIntent.FLAG_UPDATE_CURRENT);
+            setOnClickPendingIntent(R.id.btnForward,pendingIntent);
+
+
         }
     }
 }
