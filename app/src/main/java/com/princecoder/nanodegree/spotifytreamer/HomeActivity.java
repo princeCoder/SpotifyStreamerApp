@@ -11,6 +11,7 @@ import android.view.MenuItem;
 
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
+import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
 
 import java.util.ArrayList;
@@ -61,6 +62,8 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent=new Intent(this,SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -132,6 +135,9 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
             fragment.setArguments(args);
 
             fragment.show(getSupportFragmentManager(), "now playing");
+
+            MediaModel model= MediaModel.getInstance();
+            model.setNowPlayingTriggeredByUser(true);
         }
         else{
             L.toast(this,getResources().getString(R.string.no_internet));

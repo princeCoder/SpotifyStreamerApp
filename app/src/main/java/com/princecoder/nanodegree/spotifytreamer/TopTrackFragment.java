@@ -5,13 +5,18 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -20,12 +25,12 @@ import android.widget.ListView;
 import com.princecoder.nanodegree.spotifytreamer.adapter.TrackAdapter;
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
+import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.model.TrackModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
@@ -79,6 +84,12 @@ public class TopTrackFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -86,7 +97,33 @@ public class TopTrackFragment extends Fragment {
         setRetainInstance(true);
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_track, menu);
+    }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId()==R.id.action_playing){
+            // Instantiate the nowPlaying fragment
+            NowPlayingFragment fragment=new NowPlayingFragment();
+            if(isOnline()){ // Make sure we start playing if we have internet
+                MediaModel model=MediaModel.getInstance();
+                if(model.isMediaPlayerHasStarted()){
+                    model.setNowPlayingTriggeredByUser(false);
+                    fragment.show(getActivity().getSupportFragmentManager(), "now playing");
+                }
+                else{
+                    L.toast(getActivity(), getResources().getString(R.string.now_playing_message));
+                }
+            }
+            else {
+                L.toast(getActivity(),getResources().getString(R.string.no_internet));
+            }
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -216,12 +253,24 @@ public class TopTrackFragment extends Fragment {
             }
         }
 
+
+
+        //Get the Location from prefences
+
+        private String getCountryFromPreference(){
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String location = prefs.getString(getString(R.string.pref_country_key),
+                    getString(R.string.pref_country_default));
+            return location;
+        }
+
         @Override
         protected Tracks doInBackground(String... params) {
             HashMap<String,Object> queryString = new HashMap<>();
             try{
                 if(isOnline()){
-                    queryString.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
+                    //queryString.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
+                    queryString.put(SpotifyService.COUNTRY,getCountryFromPreference());
                     return  mSpotifyService.getArtistTopTrack(params[0], queryString);
                 }
                 else{
@@ -241,7 +290,7 @@ public class TopTrackFragment extends Fragment {
             mAdapter.clear();
             if (tracks == null || tracks.tracks.size() == 0) {
                 if(isOnline())
-                L.toast(getActivity(),getResources().getString(R.string.no_track));
+                    L.toast(getActivity(),getResources().getString(R.string.no_track));
                 else
                     L.toast(getActivity(),getResources().getString(R.string.no_internet));
             }

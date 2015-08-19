@@ -5,6 +5,8 @@
 
     <string name="action_settings">Settings</string>
 
+    <string name="action_now_playing">Now Playing</string>
+
     <!--Track Title bar -->
     <string name="title_activity_track">Top 10 Tracks</string>
 
@@ -64,5 +66,15 @@
 
     <!--Repeat_on toast message-->
     <string name="repeat_on">Repeat is ON</string>
+
+    <!--Repeat_on toast message-->
+    <string name="pref_country_label">Select Country</string>
+
+    <!--Repeat_on toast message-->
+    <string name="pref_country_key">US</string>
+
+    <!--Repeat_on toast message-->
+    <string name="pref_country_default">US</string>
+    <string name="now_playing_message">You have to play a track</string>
 
 </resources>

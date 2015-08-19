@@ -407,6 +407,9 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+
+
+
         // Inflate the layout for this fragment
         View rootView= inflater.inflate(R.layout.fragment_now_playing, null);
 
@@ -551,7 +554,18 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         else {
             //Start playing the selected track
             isFirstTime=false;
-            startSelectedTrack();
+            if(mModel.isNowPlayingTriggeredByUser()){
+                startSelectedTrack();
+            }
+            else{
+                //We update the progress bar
+                updateProgressBar();
+
+
+                Intent intent=new Intent(getActivity(),MediaPlayerService.class);
+                intent.setAction(MediaPlayerService.MEDIASERVICE_RESUME_PLAYING);
+                getActivity().startService(intent);
+            }
         }
     }
 

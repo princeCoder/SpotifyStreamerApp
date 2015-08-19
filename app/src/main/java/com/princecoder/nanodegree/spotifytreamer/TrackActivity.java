@@ -13,6 +13,7 @@ import android.view.MenuItem;
 
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
+import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_track, menu);
+        getMenuInflater().inflate(R.menu.menu_home, menu);
         return true;
     }
 
@@ -51,6 +52,8 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
         int id = item.getItemId();
         
         if (id == R.id.action_settings) {
+            Intent intent=new Intent(this,SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
 
@@ -81,6 +84,9 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
         if(isOnline()){ // Make sure we start playing if we have internet
             fragment.setArguments(args);
             fragment.show(getSupportFragmentManager(), "now playing");
+
+            MediaModel model= MediaModel.getInstance();
+            model.setNowPlayingTriggeredByUser(true);
         }
         else {
             L.toast(this,getResources().getString(R.string.no_internet));
