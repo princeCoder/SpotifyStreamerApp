@@ -1,6 +1,7 @@
 package com.princecoder.nanodegree.spotifytreamer;
 
 import android.annotation.TargetApi;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -66,10 +67,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //List of tracks
     private ArrayList<TrackModel> mListTracks=new ArrayList<>();
-
-    // Track whether we ever called start() on the media player so we don't try
-    // to reset or release it.
-    private boolean mediaPlayerHasStarted = false;
 
     private TelephonyManager telephonyManager;
     private PhoneStateListener listener;
@@ -263,8 +260,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         stop();
         synchronized (this) {
             if (mp != null) {
-                if (mediaPlayerHasStarted) {
+                if (mModel.isMediaPlayerHasStarted()) {
+                    //Release the Media player
                     mp.release();
+
                 } else {
                     mp.setOnCompletionListener(null);
                     mp.setOnErrorListener(null);
@@ -276,12 +275,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             }
         }
 
+        //Stop the service looper
         serviceLooper.quit();
-        stopForeground( true );
+        stopForeground(true);
 
-        getApplicationContext().sendBroadcast(new Intent(SERVICE_CLOSE_NAME));
-
+        //Remove TelephonyManager listener
         telephonyManager.listen(listener, PhoneStateListener.LISTEN_NONE);
+
+        //Cancel notifications
+        NotificationManager manager=(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.cancelAll();
+
     }
 
     @Nullable
@@ -480,7 +484,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         L.m(LOG_TAG, "prepareThenPlay " + mCurrentTrack.getTrackName());
         // First, clean up any existing audio.
         stop();
-        mediaPlayerHasStarted = false;
+        mModel.setMediaPlayerHasStarted(false);
         L.m(LOG_TAG, "listening to " + url);
         synchronized (this) {
             L.m(LOG_TAG, "reset: " + url);
@@ -522,7 +526,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         mp.start();
 
         mModel.setPause(false);
-        mediaPlayerHasStarted = true;
+
+        mModel.setMediaPlayerHasStarted(true);
 
         // Display the notification
         displayNotification();
@@ -753,11 +758,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private synchronized void displayNotification(){
 
         // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(this, MediaPlayerService.class);
-        PendingIntent resultPendingIntent=PendingIntent.getService(this,0,resultIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+//        Intent resultIntent = new Intent(this, MediaPlayerService.class);
+//        PendingIntent resultPendingIntent=PendingIntent.getService(this,0,resultIntent,PendingIntent.FLAG_UPDATE_CURRENT);
 
         RemoveControlWidget remoteView = new RemoveControlWidget(getApplicationContext(),getApplicationContext().getPackageName(), R.layout.notification_content);
-        remoteView.setOnClickPendingIntent(R.id.normal, resultPendingIntent);
+//        remoteView.setOnClickPendingIntent(R.id.normal, resultPendingIntent);
 
         // L.m(LOG_TAG, "-------------------------  "+mModel.getCurrentTrack().getThumb()+" -------------------------");
 
@@ -774,10 +779,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
         NotificationCompat.Builder mBuilder =
                 (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        // Show controls on lock screen even when user hides sensitive content.
+                        .setVisibility(Notification.VISIBILITY_PUBLIC)
                         .setContentTitle(getResources().getString(R.string.app_name))
                         .setContentText(mModel.getCurrentTrack().getTrackName())
                         .setSmallIcon(R.mipmap.ic_launcher).setAutoCancel(true)
-                        .setContentIntent(resultPendingIntent)
+//                        .setContentIntent(resultPendingIntent)
                         .setContent(remoteView);
 
         NotificationManager notificationManager =

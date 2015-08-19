@@ -63,6 +63,13 @@ public class MediaModel {
     /** flag indicating if the mediaplayer is paused or not */
     private Boolean mMediaPlayerIsPaused = false;
 
+    //Does the user triggered the now playing screen?
+    private boolean mNowPlayingTriggeredByUser=false;
+
+    // Track whether we ever called start() on the media player so we don't try
+    // to reset or release it.
+    private boolean mediaPlayerHasStarted = false;
+
 
     /**
      *
@@ -138,6 +145,14 @@ public class MediaModel {
         return mStopped;
     }
 
+    public boolean isMediaPlayerHasStarted() {
+        return mediaPlayerHasStarted;
+    }
+
+    public void setMediaPlayerHasStarted(boolean mediaPlayerHasStarted) {
+        this.mediaPlayerHasStarted = mediaPlayerHasStarted;
+    }
+
     /**
      *
      * @return true if the mediaplayer is currently playing a song
@@ -146,6 +161,14 @@ public class MediaModel {
         return mMediaPlayerIsPlaying;
     }
 
+
+    public boolean isNowPlayingTriggeredByUser() {
+        return mNowPlayingTriggeredByUser;
+    }
+
+    public void setNowPlayingTriggeredByUser(boolean mNowPlayingTriggeredByUser) {
+        this.mNowPlayingTriggeredByUser = mNowPlayingTriggeredByUser;
+    }
 
     /**
      *
