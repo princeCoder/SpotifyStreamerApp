@@ -57,6 +57,9 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     // Button Repeat
     private ImageButton btnRepeat;
 
+    // Button Repeat
+    private ImageButton btnSpotify;
+
     // Button Shuffle
     private ImageButton btnShuffle;
 
@@ -336,6 +339,10 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
             case R.id.btnRepeat:
                 mIntent.setAction(MediaPlayerService.MEDIASERVICE_REPEAT);
                 break;
+            case R.id.btnSpotify:
+                //open Spotify
+                openSpotify();
+                break;
             case R.id.btnShuffle:
                 mIntent.setAction(MediaPlayerService.MEDIASERVICE_SHUFFLE);
                 break;
@@ -343,6 +350,19 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         //Send intent via then startService Method
         getActivity().startService(mIntent);
     }
+
+
+
+    private void openSpotify(){
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT,
+                mModel.getCurrentTrack().getExternalUrl());
+        startActivity(shareIntent);
+    }
+
+
 
     /**
      * Update timer on seekbar
@@ -425,6 +445,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         btnNext = (ImageButton) rootView.findViewById(R.id.btnNext);
         btnPrevious = (ImageButton)rootView.findViewById(R.id.btnPrevious);
         btnRepeat = (ImageButton) rootView.findViewById(R.id.btnRepeat);
+        btnSpotify = (ImageButton) rootView.findViewById(R.id.btnSpotify);
         btnShuffle = (ImageButton) rootView.findViewById(R.id.btnShuffle);
         songProgressBar = (SeekBar) rootView.findViewById(R.id.songProgressBar);
         songTitleLabel = (TextView) rootView.findViewById(R.id.songTitle);
@@ -481,6 +502,13 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         });
 
         btnRepeat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performAction(v);
+            }
+        });
+
+        btnSpotify.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 performAction(v);
@@ -547,9 +575,8 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         super.onResume();
         L.m(LOG_TAG, "Now Playing onResume ");
         if(!isFirstTime){
-            Intent intent=new Intent(getActivity(),MediaPlayerService.class);
-            intent.setAction(MediaPlayerService.MEDIASERVICE_RESUME_PLAYING);
-            getActivity().startService(intent);
+            updateProgressBar();
+            updateUI(mModel.getCurrentTrackIndex());
         }
         else {
             //Start playing the selected track
@@ -560,11 +587,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
             else{
                 //We update the progress bar
                 updateProgressBar();
-
-
-                Intent intent=new Intent(getActivity(),MediaPlayerService.class);
-                intent.setAction(MediaPlayerService.MEDIASERVICE_RESUME_PLAYING);
-                getActivity().startService(intent);
+                updateUI(mModel.getCurrentTrackIndex());
             }
         }
     }

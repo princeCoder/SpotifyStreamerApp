@@ -22,6 +22,10 @@ public class TrackModel implements Serializable, IElement {
     // Preview url
     private String prevUrl;
 
+
+    // external spotify url
+    private String externalUrl;
+
     // Getters and Setters
 
     public String getTrackName() {
@@ -62,6 +66,14 @@ public class TrackModel implements Serializable, IElement {
 
     public void setArtist(String artist) {
         this.artist = artist;
+    }
+
+    public String getExternalUrl() {
+        return externalUrl;
+    }
+
+    public void setExternalUrl(String externalUrl) {
+        this.externalUrl = externalUrl;
     }
 
     @Override
