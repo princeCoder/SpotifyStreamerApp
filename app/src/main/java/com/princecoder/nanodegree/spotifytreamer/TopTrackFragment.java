@@ -13,6 +13,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.ShareActionProvider;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -73,6 +75,17 @@ public class TopTrackFragment extends Fragment {
     //Artist Tag
     public static final String SELECTED_ARTIST="SELECTED_ARTIST";
 
+    //To know if the fragment is recreated or not
+    private boolean isCreated=true;
+
+    //Used by the shareIntent
+    private static final String SPOTIFY_SHARE_HASHTAG = " #SpotifyStreamer";
+
+    private String mTrackString="";
+
+    ShareActionProvider mShareActionProvider;
+
+    MenuItem menuItem;
 
     @Override
     public void onAttach(Activity activity) {
@@ -82,6 +95,10 @@ public class TopTrackFragment extends Fragment {
         } catch (ClassCastException e) {
             throw new ClassCastException(TAG + activity.getString(R.string.track_selected_class_cast_exception_message));
         }
+    }
+
+    public TopTrackFragment(){
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -97,9 +114,47 @@ public class TopTrackFragment extends Fragment {
         setRetainInstance(true);
     }
 
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_track, menu);
+
+        // Retrieve the share menu item
+
+        //This is to create a shareActionProvider
+        menuItem = menu.findItem(R.id.menu_item_share);
+
+        if(MediaModel.getInstance().getCurrentTrack()!=null){
+            mShareActionProvider = new ShareActionProvider(getActivity());
+            mShareActionProvider.setShareIntent(createShareSpotifyIntent());
+            MenuItemCompat.setActionProvider(menuItem, mShareActionProvider);
+        }
+    }
+
+
+    private Intent createShareSpotifyIntent(){
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        shareIntent.setType("text/plain");
+        if(MediaModel.getInstance().getCurrentTrack()!=null){
+            shareIntent.putExtra(Intent.EXTRA_TEXT,
+                    MediaModel.getInstance().getCurrentTrack().getTrackName() + SPOTIFY_SHARE_HASHTAG);
+        }
+        else{
+            L.toast(getActivity(), "You have to play a song");
+        }
+        return shareIntent;
+    }
+
+    private void shareCurrentSongIntent() {
+
+        if(MediaModel.getInstance().getCurrentTrack()!=null){
+            startActivity(createShareSpotifyIntent());
+        }
+        else{
+            L.toast(getActivity(), "You have to play a song in order to share it");
+        }
+
     }
 
     @Override
@@ -122,8 +177,13 @@ public class TopTrackFragment extends Fragment {
             }
             return true;
         }
+        else if(item.getItemId()==R.id.menu_item_share) {
+
+            shareCurrentSongIntent();
+        }
         return false;
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -131,8 +191,8 @@ public class TopTrackFragment extends Fragment {
 
         View rootView=inflater.inflate(R.layout.fragment_top_track, container, false);
 
-        mTrackListView=(ListView)rootView.findViewById(R.id.track_listview);
-        mAdapter=new TrackAdapter(getActivity(),R.layout.track_row_item,R.id.topTxt,new ArrayList<IElement>());
+        mTrackListView = (ListView) rootView.findViewById(R.id.track_listview);
+        mAdapter = new TrackAdapter(getActivity(), R.layout.track_row_item, R.id.topTxt, new ArrayList<IElement>());
 
         mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -149,6 +209,8 @@ public class TopTrackFragment extends Fragment {
 
         if(savedInstanceState!=null){
 
+            L.m(TAG, "------------- savedInstanceState !=null --------------");
+
             if(savedInstanceState.containsKey(SELECTED_ARTIST)) {
                 mArtist = (ArtistModel) savedInstanceState.getSerializable(SELECTED_ARTIST);
                 mAdapter.clear();
@@ -163,30 +225,9 @@ public class TopTrackFragment extends Fragment {
                 }
             }
 
-        }
-        else{
-
-            Intent intent=getActivity().getIntent();
-            if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
-                ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
-                new TopTrackAsyncTask().execute(artist.getSpotifyId());
-
-                L.m(LOG_TAG,"------------ We are in single pane mode -----------------");
-            }
-            else{ // We are in dual pane mode
-
-                L.m(LOG_TAG,"------------ We are in Dual pane mode -----------------");
-                Bundle args=getArguments();
-                if(args!=null){
-                    mArtist = (ArtistModel)args.getSerializable(SELECTED_ARTIST);
-                    new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
-                }
-            }
+            isCreated=false;
 
         }
-
-
-
         // Inflate the layout for this fragment
         return rootView;
     }
@@ -198,7 +239,7 @@ public class TopTrackFragment extends Fragment {
         //I save the current artist and his tracks
 
         outState.putSerializable(SELECTED_ARTIST,mArtist);
-        outState.putSerializable(TRACKS,mAdapter.getElements());
+        outState.putSerializable(TRACKS, mAdapter.getElements());
 
         //I save the current position
         if(mPosition!=ListView.INVALID_POSITION){
@@ -224,8 +265,48 @@ public class TopTrackFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        L.m(TAG, "------------- TopTrackFragment onResume --------------");
+        if(MediaModel.getInstance().getCurrentTrack()!=null){
+            mShareActionProvider = new ShareActionProvider(getActivity());
+            mShareActionProvider.setShareIntent(createShareSpotifyIntent());
+            MenuItemCompat.setActionProvider(menuItem, mShareActionProvider);
+        }
+        if(isCreated){
+            L.m(TAG, "------------- TopTrackFragment onResume reloading datas--------------");
+            displayTracK();
+        }
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(MediaModel.getInstance().getCurrentTrack()!=null){
+            mShareActionProvider = new ShareActionProvider(getActivity());
+            mShareActionProvider.setShareIntent(createShareSpotifyIntent());
+            MenuItemCompat.setActionProvider(menuItem, mShareActionProvider);
+        }
+        isCreated=true;
+    }
+
+    private void displayTracK(){
+        Intent intent=getActivity().getIntent();
+        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
+            ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
+            new TopTrackAsyncTask().execute(artist.getSpotifyId());
+
+            L.m(LOG_TAG,"------------ We are in single pane mode -----------------");
+        }
+        else{ // We are in dual pane mode
+
+            L.m(LOG_TAG,"------------ We are in Dual pane mode -----------------");
+            Bundle args=getArguments();
+            if(args!=null){
+                mArtist = (ArtistModel)args.getSerializable(SELECTED_ARTIST);
+                new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
+            }
+        }
+
+    }
+
 
     /**
      * Top track asyncTask
@@ -301,6 +382,7 @@ public class TopTrackFragment extends Fragment {
                     t.setPrevUrl(track.preview_url);
                     t.setAlbum(track.album.name);
                     t.setArtist((track.artists.size() > 0 ? track.artists.get(0).name : "Unknown Artist"));
+                    t.setExternalUrl(track.external_urls.get("spotify"));
                     if(track.album.images!=null && track.album.images.size()>0){
                         t.setAlbThumb(track.album.images.get(0).url);
                     }

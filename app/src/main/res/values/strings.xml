@@ -71,10 +71,11 @@
     <string name="pref_country_label">Select Country</string>
 
     <!--Repeat_on toast message-->
-    <string name="pref_country_key">US</string>
+    <string name="pref_country_key">country</string>
 
     <!--Repeat_on toast message-->
-    <string name="pref_country_default">US</string>
+    <string name="pref_country_default">us</string>
     <string name="now_playing_message">You have to play a track</string>
+    <string name="action_share">Share</string>
 
 </resources>

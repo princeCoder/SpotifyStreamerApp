@@ -21,7 +21,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
-import android.support.v7.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -754,43 +753,36 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private synchronized void displayNotification(){
 
-        // Creates an explicit intent for an Activity in your app
-//        Intent resultIntent = new Intent(this, MediaPlayerService.class);
-//        PendingIntent resultPendingIntent=PendingIntent.getService(this,0,resultIntent,PendingIntent.FLAG_UPDATE_CURRENT);
-
         RemoveControlWidget remoteView = new RemoveControlWidget(getApplicationContext(),getApplicationContext().getPackageName(), R.layout.notification_content);
-//        remoteView.setOnClickPendingIntent(R.id.normal, resultPendingIntent);
-
-        // L.m(LOG_TAG, "-------------------------  "+mModel.getCurrentTrack().getThumb()+" -------------------------");
 
         Bitmap image = getBitmapFromURL(mModel.getCurrentTrack().getThumb());
-        remoteView.setImageViewBitmap(R.id.AppThumb,image);
-        //removeWidget.setImageViewResource(R.id.AppThumb,R.mipmap.ic_launcher);
+        remoteView.setImageViewBitmap(R.id.AppThumb, image);
+
         remoteView.setTextViewText(R.id.songTitle, mModel.getCurrentTrack().getTrackName());
+        remoteView.setTextViewText(R.id.songAlbum, mModel.getCurrentTrack().getAlbum());
+        remoteView.setTextViewText(R.id.songArtist, mModel.getCurrentTrack().getArtist());
+
         if(mModel.isPaused()){
-            remoteView.setImageViewResource(R.id.btnPlay, R.mipmap.img_btn_play);
+            remoteView.setImageViewResource(R.id.btnPlay, R.drawable.ic_play_white);
         }
         else {
-            remoteView.setImageViewResource(R.id.btnPlay, R.mipmap.img_btn_pause);
+            remoteView.setImageViewResource(R.id.btnPlay, R.drawable.ic_pause_white);
         }
 
-        NotificationCompat.Builder mBuilder =
-                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                        // Show controls on lock screen even when user hides sensitive content.
-                        .setVisibility(Notification.VISIBILITY_PUBLIC)
-                        .setContentTitle(getResources().getString(R.string.app_name))
-                        .setContentText(mModel.getCurrentTrack().getTrackName())
-                        .setSmallIcon(R.mipmap.ic_launcher).setAutoCancel(true)
-//                        .setContentIntent(resultPendingIntent)
-                        .setContent(remoteView);
+        Notification.Builder mNotifyBuilder = new Notification.Builder(this);
+        Notification foregroundNote = mNotifyBuilder.setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setContentTitle(getResources().getString(R.string.app_name))
+                .setContentText(mModel.getCurrentTrack().getTrackName())
+                .setSmallIcon(R.drawable.ic_launcher).setAutoCancel(true)
+                .build();
+        foregroundNote.bigContentView = remoteView;
 
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        notificationManager.notify(0,mBuilder.build());
+        // now show notification..
+        NotificationManager mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotifyManager.notify(0, foregroundNote);
     }
 
 

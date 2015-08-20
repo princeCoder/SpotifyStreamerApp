@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -17,7 +17,7 @@ import com.princecoder.nanodegree.spotifytreamer.utils.L;
 import java.util.ArrayList;
 
 
-public class HomeActivity extends AppCompatActivity implements HomeFragment.OnArtistSelectedListener,TopTrackFragment.OnTrackSelectedListener{
+public class HomeActivity extends ActionBarActivity implements HomeFragment.OnArtistSelectedListener,TopTrackFragment.OnTrackSelectedListener{
 
     // boolean value to know if it is a tablet or not
     private boolean mTwoPane;
@@ -48,10 +48,14 @@ public class HomeActivity extends AppCompatActivity implements HomeFragment.OnAr
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+
+        /** Inflating the current activity's menu with res/menu/items.xml */
         getMenuInflater().inflate(R.menu.menu_home, menu);
-        return true;
+
+        return super.onCreateOptionsMenu(menu);
+
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

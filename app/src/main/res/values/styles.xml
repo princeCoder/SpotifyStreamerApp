@@ -6,9 +6,15 @@
         <item name="colorPrimaryDark">@color/primary_dark</item>
     </style>
 
+
     <!-- Main activity theme. -->
     <style name="SpotifyTheme" parent="AppTheme">
         <item name="actionBarStyle">@style/ActionBar.Solid.Spotify.NoTitle</item>
+    </style>
+
+
+    <!-- Settings activity theme. -->
+    <style name="SettingsTheme" parent="AppTheme">
     </style>
 
     <string name="title_activity_settings">Settings</string>
