@@ -1,16 +1,26 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
               android:layout_height="match_parent"
-                android:background="@drawable/rectangle"
               android:descendantFocusability="beforeDescendants" tools:context=".MainActivity">
 
     <android.support.v7.widget.SearchView
         style="@style/searchText"
         android:layout_alignParentTop="true"
         android:id="@+id/searchText"/>
+    <FrameLayout android:layout_width="match_parent"
+                 android:layout_height="match_parent"
+                 android:layout_below="@+id/searchText">
+        <ListView
+            android:id="@+id/artist_listview"
+            style="@style/standard_listview"/>
 
-    <ListView
-        android:id="@+id/artist_listview"
-        android:layout_below="@+id/searchText"
-        style="@style/standard_listview"/>
+        <TextView android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:id="@+id/listview_spotify_empty"
+                  android:text="@string/empty_spotify_list"
+                  android:gravity="center_horizontal"
+                  android:padding="16dp"
+            />
+
+    </FrameLayout>
 </RelativeLayout>

@@ -9,16 +9,23 @@
     <ImageView
         android:id="@+id/thumb"
         style="@style/standard_icon"
-        android:background="@drawable/rectangle"
+        android:background="@drawable/img"
+
         android:src="@mipmap/ic_user"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/topTxt"
-        android:textSize="22sp"
-        android:textColor="@color/primary_text"
-        android:fontFamily="sans-serif-condensed"
-        android:textAppearance="?android:textAppearanceLarge"
-        style="@style/standard_card_top_text"/>
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:layout_margin="10dp"
+        >
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/topTxt"
+            android:textSize="22sp"
+            android:textColor="@color/primary_text"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceLarge"
+            style="@style/standard_card_top_text"/>
+        </LinearLayout>
+
 </LinearLayout>
 

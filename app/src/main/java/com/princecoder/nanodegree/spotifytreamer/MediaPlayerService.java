@@ -11,8 +11,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -20,7 +18,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
-import android.support.annotation.Nullable;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -29,6 +26,7 @@ import android.widget.RemoteViews;
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.model.TrackModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
+import com.princecoder.nanodegree.spotifytreamer.utils.Utilities;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -287,7 +285,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -297,7 +294,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public void onCompletion(MediaPlayer mp) {
         Log.w(LOG_TAG, "onComplete()");
-        if(isOnline()){
+        if(Utilities.isOnline(getApplicationContext())){
             // check for repeat is ON or OFF
             if(mModel.isRepeat()){
                 // repeat is on play same song again
@@ -376,7 +373,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public boolean onError(MediaPlayer mp, int what, int extra) {
         L.m(LOG_TAG, "Error:  " + what + " " + extra);
         //Reset the media Player
-        if(!isOnline()){
+        if(!Utilities.isOnline(getApplicationContext())){
             handleMediaPlayerError(MEDIAPLAYER_SERVICE_ERROR.Connection);
         }
         else{
@@ -496,17 +493,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
     }
 
-
-    /**
-     *  Check if we are online
-     */
-    protected boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return (netInfo != null && netInfo.isConnectedOrConnecting());
-    }
-
-
     //Start playing the current track
     private void startPlaying() {
         L.m(LOG_TAG, "StartPlaying: ");
@@ -540,7 +526,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     // Play previous track
     synchronized private void previous(){
-        if(isOnline()){
+        if(Utilities.isOnline(getApplicationContext())){
             if(mCurrentTrackIndex > 0){
                 int currentSongIndex = mCurrentTrackIndex - 1;
                 mCurrentTrackIndex=currentSongIndex;
@@ -557,7 +543,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //Play next song
     synchronized private void next(){
-        if(isOnline()){
+        if(Utilities.isOnline(getApplicationContext())){
             // check if next song is there or not
             if(mCurrentTrackIndex < (mListTracks.size() - 1)){
                 int currentSongIndex = mCurrentTrackIndex + 1;
@@ -632,7 +618,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 mModel.setPause(true);
             }
             else{
-                if(isOnline()){
+                if(Utilities.isOnline(getApplicationContext())){
                     play();
                 }
                 else {
