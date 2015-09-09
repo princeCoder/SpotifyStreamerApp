@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.MediaPlayer;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
@@ -643,14 +641,6 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         }
     }
 
-    /**
-     *  Check if we are online
-     */
-    protected boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return (netInfo != null && netInfo.isConnectedOrConnecting());
-    }
 
 
     // Receivers
@@ -660,7 +650,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
         public void onReceive(Context context, Intent intent) {
 
             String message = context.getString(R.string.msg_unknown_error);
-            if(!isOnline()){
+            if(!Utilities.isOnline(getActivity())){
                 message = context.getString(R.string.msg_playback_connection_error);
                 L.m(LOG_TAG, "Not connected to internet");
                 L.toast(context, message);

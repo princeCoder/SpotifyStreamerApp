@@ -3,9 +3,6 @@ package com.princecoder.nanodegree.spotifytreamer;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,11 +13,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.princecoder.nanodegree.spotifytreamer.adapter.ArtistAdapter;
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
+import com.princecoder.nanodegree.spotifytreamer.utils.Utilities;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +38,8 @@ public class HomeFragment extends Fragment {
 
     // ListView to display artists
     private ListView mListView;
+
+    private TextView emptyView;
 
     // List of Artists
     private ArrayList<IElement> mListOfArtist=new ArrayList<>();
@@ -91,6 +92,8 @@ public class HomeFragment extends Fragment {
 
         mListView = (ListView) myView.findViewById(R.id.artist_listview);
         mSearchText =(SearchView)myView.findViewById(R.id.searchText);
+        emptyView=(TextView)myView.findViewById(R.id.listview_spotify_empty);
+        mListView.setEmptyView(emptyView);
 
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -121,7 +124,7 @@ public class HomeFragment extends Fragment {
                 if (!searchKeyword.isEmpty()) {
 
                     // Search for artist
-                    if (isOnline()) {
+                    if (Utilities.isOnline(getActivity())) {
                         mSearchText.clearFocus();
                         new ArtistAsyncTask().execute(mSearchText.getQuery().toString());
                     } else
@@ -175,6 +178,8 @@ public class HomeFragment extends Fragment {
 
         mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
+        updateEmptyView();
+
         setRetainInstance(true);
     }
 
@@ -186,18 +191,6 @@ public class HomeFragment extends Fragment {
         }
         outState.putSerializable(LIST_TAG,mListOfArtist);
         super.onSaveInstanceState(outState);
-    }
-
-    /**
-     * Are we online?
-     *
-     * @return boolean
-     *
-     */
-    protected boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     /**
@@ -213,14 +206,15 @@ public class HomeFragment extends Fragment {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            if(isOnline()) {
+            if(Utilities.isOnline(getActivity())) {
                 mProgressDialog = ProgressDialog.show(getActivity(), getResources().getString(R.string.progress_dialog_title), getResources().getString(R.string.progress_dialog_message));
                 mProgressDialog.show();
             }else{
                 L.m(TAG,getResources().getString(R.string.no_internet));
                 // I dismiss the progress dialog
                 mProgressDialog.dismiss();
-                L.toast(getActivity(),getResources().getString(R.string.no_internet));
+                //L.toast(getActivity(),getResources().getString(R.string.no_internet));
+                updateEmptyView();
             }
         }
 
@@ -263,8 +257,17 @@ public class HomeFragment extends Fragment {
                 // I notify the user no data has been found
                 L.toast(getActivity(),getResources().getString(R.string.no_artist));
             }
+            updateEmptyView();
         }
+    }
 
+
+    private void updateEmptyView(){
+        if(!Utilities.isOnline(getActivity())){
+            emptyView.setText(getString(R.string.no_internet));
+        }
+        else
+            emptyView.setText(getString(R.string.empty_spotify_list));
     }
 
     public interface OnArtistSelectedListener{

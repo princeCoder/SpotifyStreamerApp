@@ -5,20 +5,30 @@
               android:gravity="center_vertical"
               android:minHeight="?android:attr/listPreferredItemHeight"
               android:background="@drawable/touch_selector"
+
               android:orientation="horizontal">
     <ImageView
         android:id="@+id/thumb"
         style="@style/standard_icon"
-        android:background="@drawable/rectangle"
+        android:layout_margin="5dp"
         android:src="@mipmap/ic_user"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/topTxt"
-        android:textColor="@color/primary_text"
-        android:textSize="18sp"
-        android:fontFamily="sans-serif-condensed"
-        android:textAppearance="?android:textAppearanceLarge"
-        style="@style/standard_card_top_text"/>
+
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:layout_margin="10dp"
+                  android:background="@drawable/touch_selector"
+        >
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/topTxt"
+            android:textColor="@color/primary_text"
+            android:textSize="18sp"
+            android:layout_gravity="center"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceLarge"
+            style="@style/standard_card_top_text"/>
+    </LinearLayout>
+
 </LinearLayout>
 

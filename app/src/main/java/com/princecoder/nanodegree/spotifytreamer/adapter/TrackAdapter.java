@@ -98,9 +98,6 @@ public class TrackAdapter extends ArrayAdapter<IElement> {
         //TextView to display the artist name or track name
         private TextView mTopTxt;
 
-        // TextView to display the album name
-        //private TextView mSubTxt;
-
         // ImageView to display the Thumbnail
         private ImageView mPicture;
 

@@ -3,11 +3,8 @@ package com.princecoder.nanodegree.spotifytreamer;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +27,7 @@ import com.princecoder.nanodegree.spotifytreamer.model.IElement;
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.model.TrackModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
+import com.princecoder.nanodegree.spotifytreamer.utils.Utilities;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -162,7 +160,7 @@ public class TopTrackFragment extends Fragment {
         if(item.getItemId()==R.id.action_playing){
             // Instantiate the nowPlaying fragment
             NowPlayingFragment fragment=new NowPlayingFragment();
-            if(isOnline()){ // Make sure we start playing if we have internet
+            if(Utilities.isOnline(getActivity())){ // Make sure we start playing if we have internet
                 MediaModel model=MediaModel.getInstance();
                 if(model.isMediaPlayerHasStarted()){
                     model.setNowPlayingTriggeredByUser(false);
@@ -253,15 +251,6 @@ public class TopTrackFragment extends Fragment {
     }
 
 
-    /**
-     *  Check if we are online
-     */
-    public boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return (netInfo != null && netInfo.isConnectedOrConnecting());
-    }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -321,7 +310,7 @@ public class TopTrackFragment extends Fragment {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            if(isOnline()) {
+            if(Utilities.isOnline(getActivity())) {
                 mProgressDialog = new ProgressDialog(getActivity());
                 mProgressDialog.setTitle(getResources().getString(R.string.progress_dialog_message));
                 mProgressDialog.show();
@@ -349,7 +338,7 @@ public class TopTrackFragment extends Fragment {
         protected Tracks doInBackground(String... params) {
             HashMap<String,Object> queryString = new HashMap<>();
             try{
-                if(isOnline()){
+                if(Utilities.isOnline(getActivity())){
                     //queryString.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
                     queryString.put(SpotifyService.COUNTRY,getCountryFromPreference());
                     return  mSpotifyService.getArtistTopTrack(params[0], queryString);
@@ -370,7 +359,7 @@ public class TopTrackFragment extends Fragment {
         protected void onPostExecute(Tracks tracks) {
             mAdapter.clear();
             if (tracks == null || tracks.tracks.size() == 0) {
-                if(isOnline())
+                if(Utilities.isOnline(getActivity()))
                     L.toast(getActivity(),getResources().getString(R.string.no_track));
                 else
                     L.toast(getActivity(),getResources().getString(R.string.no_internet));

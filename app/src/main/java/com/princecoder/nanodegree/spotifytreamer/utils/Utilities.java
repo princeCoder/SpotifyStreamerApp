@@ -1,5 +1,9 @@
 package com.princecoder.nanodegree.spotifytreamer.utils;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
 import java.io.Serializable;
 
 /**
@@ -12,6 +16,7 @@ public class Utilities implements Serializable{
      * Timer Format
      * Hours:Minutes:Seconds
      * */
+
     public String milliSecondsToTimer(long milliseconds){
         String finalTimerString="";
         String secondsString ;
@@ -68,5 +73,17 @@ public class Utilities implements Serializable{
 
         // return current duration in milliseconds
         return currentDuration * 1000;
+    }
+
+    /**
+     * Are we online?
+     *
+     * @return boolean
+     *
+     */
+    public static boolean isOnline(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 }
