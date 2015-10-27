@@ -2,7 +2,6 @@
 .*.swp
 build/*
 build
-
 .gradle
 .idea
 *.ipr
