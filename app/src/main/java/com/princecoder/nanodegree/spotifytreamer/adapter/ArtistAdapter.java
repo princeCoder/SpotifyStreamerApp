@@ -15,6 +15,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 /**
  * Created by prinzlyngotoum on 7/1/15.
  */
@@ -125,7 +127,7 @@ public class ArtistAdapter extends ArrayAdapter<IElement> {
             return mPicture;
         }
 
-        public void setImage(ImageView mPicture) {
+        public void setImage(CircleImageView mPicture) {
             this.mPicture = mPicture;
         }
     }

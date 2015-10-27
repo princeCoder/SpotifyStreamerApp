@@ -296,7 +296,6 @@ public class TopTrackFragment extends Fragment {
 
     }
 
-
     /**
      * Top track asyncTask
      */
