@@ -1,10 +1,12 @@
-package com.princecoder.nanodegree.spotifytreamer;
+package com.princecoder.nanodegree.spotifytreamer.view;
 
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+
+import com.princecoder.nanodegree.spotifytreamer.R;
 
 /**
  * Created by Prinzly Ngotoum on 8/19/15.

@@ -16,7 +16,7 @@
         android:label="@string/app_name"
         android:theme="@style/SpotifyTheme" >
         <activity
-            android:name=".HomeActivity"
+            android:name=".view.HomeActivity"
             android:launchMode="singleTop"
             android:windowSoftInputMode="stateHidden"
             android:label="@string/app_name" >
@@ -27,21 +27,21 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".TrackActivity"
-            android:parentActivityName=".HomeActivity"
+            android:name=".view.TrackActivity"
+            android:parentActivityName=".view.HomeActivity"
 
             android:label="@string/title_activity_track" >
         </activity>
         <activity
-            android:name=".SettingsActivity"
+            android:name=".view.SettingsActivity"
             android:label="@string/title_activity_settings"
             android:theme="@style/SettingsTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".HomeActivity" />
+                android:value=".view.HomeActivity" />
         </activity>
 
-        <service android:name="com.princecoder.nanodegree.spotifytreamer.MediaPlayerService" android:enabled="true"/>
+        <service android:name=".service.MediaPlayerService" android:enabled="true"/>
 
     </application>
 

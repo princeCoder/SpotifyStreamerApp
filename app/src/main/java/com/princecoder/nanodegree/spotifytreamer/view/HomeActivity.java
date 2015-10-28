@@ -1,4 +1,4 @@
-package com.princecoder.nanodegree.spotifytreamer;
+package com.princecoder.nanodegree.spotifytreamer.view;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +9,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.princecoder.nanodegree.spotifytreamer.R;
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
@@ -17,7 +18,7 @@ import com.princecoder.nanodegree.spotifytreamer.utils.L;
 import java.util.ArrayList;
 
 
-public class HomeActivity extends ActionBarActivity implements HomeFragment.OnArtistSelectedListener,TopTrackFragment.OnTrackSelectedListener{
+public class HomeActivity extends ActionBarActivity implements HomeFragment.OnArtistSelectedListener,TopTrackFragment.OnTrackSelectedListener {
 
     // boolean value to know if it is a tablet or not
     private boolean mTwoPane;

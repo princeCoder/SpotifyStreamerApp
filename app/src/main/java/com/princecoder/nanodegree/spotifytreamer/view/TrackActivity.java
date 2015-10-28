@@ -1,4 +1,4 @@
-package com.princecoder.nanodegree.spotifytreamer;
+package com.princecoder.nanodegree.spotifytreamer.view;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -11,10 +11,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.princecoder.nanodegree.spotifytreamer.R;
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
+import com.princecoder.nanodegree.spotifytreamer.view.HomeActivity;
+import com.princecoder.nanodegree.spotifytreamer.view.NowPlayingFragment;
+import com.princecoder.nanodegree.spotifytreamer.view.SettingsActivity;
+import com.princecoder.nanodegree.spotifytreamer.view.TopTrackFragment;
 
 import java.util.ArrayList;
 
@@ -32,7 +37,7 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
 
         //We create the Top Track fragment and add it to the activity
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.trackContainer, new TopTrackFragment(),HomeActivity.TRACK_FRAGMENT_TAG)
+                    .add(R.id.trackContainer, new TopTrackFragment(), HomeActivity.TRACK_FRAGMENT_TAG)
                     .commit();
         }
     }

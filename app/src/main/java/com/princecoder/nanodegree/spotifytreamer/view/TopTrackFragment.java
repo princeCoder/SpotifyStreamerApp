@@ -1,14 +1,10 @@
-package com.princecoder.nanodegree.spotifytreamer;
+package com.princecoder.nanodegree.spotifytreamer.view;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.ShareActionProvider;
@@ -21,27 +17,23 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.princecoder.nanodegree.spotifytreamer.R;
 import com.princecoder.nanodegree.spotifytreamer.adapter.TrackAdapter;
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
-import com.princecoder.nanodegree.spotifytreamer.model.TrackModel;
+import com.princecoder.nanodegree.spotifytreamer.presenter.ITrackPresenter;
+import com.princecoder.nanodegree.spotifytreamer.presenter.TrackPresenter;
+import com.princecoder.nanodegree.spotifytreamer.service.TopTrackAsyncTask;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
 import com.princecoder.nanodegree.spotifytreamer.utils.Utilities;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-
-import kaaes.spotify.webapi.android.SpotifyApi;
-import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Track;
-import kaaes.spotify.webapi.android.models.Tracks;
-import retrofit.RetrofitError;
 
 /**
  * @author prinzlyngotoum
  */
-public class TopTrackFragment extends Fragment {
+public class TopTrackFragment extends Fragment implements ITrackView{
 
     //Log element
     public final String LOG_TAG =getClass().getSimpleName();
@@ -70,6 +62,8 @@ public class TopTrackFragment extends Fragment {
     // Track tag
     private static final String TRACKS="TRACKS";
 
+    ArrayList<IElement>mListOfTracks=new ArrayList<>();
+
     //Artist Tag
     public static final String SELECTED_ARTIST="SELECTED_ARTIST";
 
@@ -84,6 +78,8 @@ public class TopTrackFragment extends Fragment {
     ShareActionProvider mShareActionProvider;
 
     MenuItem menuItem;
+
+    ITrackPresenter mPresenter;
 
     @Override
     public void onAttach(Activity activity) {
@@ -102,6 +98,7 @@ public class TopTrackFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mPresenter=new TrackPresenter(this);
         setHasOptionsMenu(true);
     }
 
@@ -190,7 +187,6 @@ public class TopTrackFragment extends Fragment {
         View rootView=inflater.inflate(R.layout.fragment_top_track, container, false);
 
         mTrackListView = (ListView) rootView.findViewById(R.id.track_listview);
-        mAdapter = new TrackAdapter(getActivity(), R.layout.track_row_item, R.id.topTxt, new ArrayList<IElement>());
 
         mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -202,8 +198,6 @@ public class TopTrackFragment extends Fragment {
             }
         });
 
-        // Set the adapter
-        mTrackListView.setAdapter(mAdapter);
 
         if(savedInstanceState!=null){
 
@@ -211,10 +205,11 @@ public class TopTrackFragment extends Fragment {
 
             if(savedInstanceState.containsKey(SELECTED_ARTIST)) {
                 mArtist = (ArtistModel) savedInstanceState.getSerializable(SELECTED_ARTIST);
-                mAdapter.clear();
             }
             if(savedInstanceState.containsKey(TRACKS)) {
-                mAdapter.setElements((ArrayList<IElement>) savedInstanceState.getSerializable(TRACKS));
+
+                mListOfTracks=(ArrayList<IElement>) savedInstanceState.getSerializable(TRACKS);
+                displayTracks(mListOfTracks);
             }
             if(savedInstanceState.containsKey(SELECTED_TRACK)) {
                 mPosition=savedInstanceState.getInt(SELECTED_TRACK);
@@ -237,6 +232,7 @@ public class TopTrackFragment extends Fragment {
         //I save the current artist and his tracks
 
         outState.putSerializable(SELECTED_ARTIST,mArtist);
+        if(mAdapter!=null)
         outState.putSerializable(TRACKS, mAdapter.getElements());
 
         //I save the current position
@@ -280,7 +276,7 @@ public class TopTrackFragment extends Fragment {
         Intent intent=getActivity().getIntent();
         if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
             ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
-            new TopTrackAsyncTask().execute(artist.getSpotifyId());
+            mPresenter.loadTracks(artist.getSpotifyId());
 
             L.m(LOG_TAG,"------------ We are in single pane mode -----------------");
         }
@@ -290,97 +286,29 @@ public class TopTrackFragment extends Fragment {
             Bundle args=getArguments();
             if(args!=null){
                 mArtist = (ArtistModel)args.getSerializable(SELECTED_ARTIST);
-                new TopTrackAsyncTask().execute(mArtist.getSpotifyId());
+                mPresenter.loadTracks(mArtist.getSpotifyId());
             }
         }
 
     }
 
-    /**
-     * Top track asyncTask
-     */
-    private class TopTrackAsyncTask extends AsyncTask<String ,Void,Tracks> {
-
-        private SpotifyApi mSpotifyApi = new SpotifyApi();
-        private SpotifyService mSpotifyService = mSpotifyApi.getService();
-        private ProgressDialog mProgressDialog;
 
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            if(Utilities.isOnline(getActivity())) {
-                mProgressDialog = new ProgressDialog(getActivity());
-                mProgressDialog.setTitle(getResources().getString(R.string.progress_dialog_message));
-                mProgressDialog.show();
-            }else{
-                L.m(TAG,getResources().getString(R.string.no_internet));
-                L.toast(getActivity(),getResources().getString(R.string.no_internet));
-                // dismiss the progress dialog
-                if (mProgressDialog!=null && mProgressDialog.isShowing())
-                    mProgressDialog.dismiss();
-            }
-        }
+    @Override
+    public void displayTracks(ArrayList<IElement> tracks) {
+        mAdapter = new TrackAdapter(getActivity(), R.layout.track_row_item, R.id.topTxt, tracks);
+        mTrackListView.setAdapter(mAdapter);
 
+    }
 
+    @Override
+    public void findTracks(String spotifyId) {
+        new TopTrackAsyncTask(getActivity(),this).execute(spotifyId);
+    }
 
-        //Get the Location from prefences
+    @Override
+    public void onItemClick(int position) {
 
-        private String getCountryFromPreference(){
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String location = prefs.getString(getString(R.string.pref_country_key),
-                    getString(R.string.pref_country_default));
-            return location;
-        }
-
-        @Override
-        protected Tracks doInBackground(String... params) {
-            HashMap<String,Object> queryString = new HashMap<>();
-            try{
-                if(Utilities.isOnline(getActivity())){
-                    //queryString.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
-                    queryString.put(SpotifyService.COUNTRY,getCountryFromPreference());
-                    return  mSpotifyService.getArtistTopTrack(params[0], queryString);
-                }
-                else{
-                    L.toast(getActivity(),getResources().getString(R.string.no_internet));
-                    return null;
-                }
-            }
-            catch (RetrofitError error){
-                L.m(TAG,error.getMessage());
-            }
-            return null;
-        }
-
-
-        @Override
-        protected void onPostExecute(Tracks tracks) {
-            mAdapter.clear();
-            if (tracks == null || tracks.tracks.size() == 0) {
-                if(Utilities.isOnline(getActivity()))
-                    L.toast(getActivity(),getResources().getString(R.string.no_track));
-                else
-                    L.toast(getActivity(),getResources().getString(R.string.no_internet));
-            }
-            else{
-                for (Track track : tracks.tracks) {
-                    TrackModel t = new TrackModel();
-                    t.setTrackName(track.name);
-                    t.setPrevUrl(track.preview_url);
-                    t.setAlbum(track.album.name);
-                    t.setArtist((track.artists.size() > 0 ? track.artists.get(0).name : "Unknown Artist"));
-                    t.setExternalUrl(track.external_urls.get("spotify"));
-                    if(track.album.images!=null && track.album.images.size()>0){
-                        t.setAlbThumb(track.album.images.get(0).url);
-                    }
-                    mAdapter.add(t);
-                }
-            }
-            // dismiss the progress dialog
-            if (mProgressDialog!=null && mProgressDialog.isShowing())
-                mProgressDialog.dismiss();
-        }
     }
 
     public interface OnTrackSelectedListener{
