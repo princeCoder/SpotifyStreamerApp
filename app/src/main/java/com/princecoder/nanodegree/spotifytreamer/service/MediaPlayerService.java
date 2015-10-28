@@ -1,4 +1,4 @@
-package com.princecoder.nanodegree.spotifytreamer;
+package com.princecoder.nanodegree.spotifytreamer.service;
 
 import android.annotation.TargetApi;
 import android.app.Notification;
@@ -23,6 +23,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import com.princecoder.nanodegree.spotifytreamer.R;
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.model.TrackModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;

@@ -1,9 +1,7 @@
-package com.princecoder.nanodegree.spotifytreamer;
+package com.princecoder.nanodegree.spotifytreamer.view;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.ProgressDialog;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -15,26 +13,30 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.princecoder.nanodegree.spotifytreamer.R;
 import com.princecoder.nanodegree.spotifytreamer.adapter.ArtistAdapter;
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
-import com.princecoder.nanodegree.spotifytreamer.utils.L;
+import com.princecoder.nanodegree.spotifytreamer.presenter.ArtistPresenter;
+import com.princecoder.nanodegree.spotifytreamer.presenter.IArtistPresenter;
+import com.princecoder.nanodegree.spotifytreamer.service.ArtistAsyncTask;
 import com.princecoder.nanodegree.spotifytreamer.utils.Utilities;
 
 import java.util.ArrayList;
-import java.util.List;
 
-import kaaes.spotify.webapi.android.SpotifyApi;
-import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Artist;
-import retrofit.RetrofitError;
+/**
+ * Todo do something
+ *
+ * -
+ *
+ */
 
-// TODO Do something
+
 
 /**
  *
  */
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements IHomeView {
 
     // ListView to display artists
     private ListView mListView;
@@ -65,6 +67,12 @@ public class HomeFragment extends Fragment {
     //List_TAG
     private final String LIST_TAG="List";
 
+    //Presenter
+    IArtistPresenter mPresenter;
+
+    //Asynctask
+    ArtistAsyncTask mTask;
+
 
     @Override
     public void onAttach(Activity activity) {
@@ -76,9 +84,12 @@ public class HomeFragment extends Fragment {
         }
     }
 
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mPresenter=new ArtistPresenter(this,getActivity());
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
@@ -95,20 +106,14 @@ public class HomeFragment extends Fragment {
         emptyView=(TextView)myView.findViewById(R.id.listview_spotify_empty);
         mListView.setEmptyView(emptyView);
 
+        //Handle the click on the listView
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int position,
                                     long id) {
                 // TODO Auto-generated method stub
-
-                // Get the selected artist
-                ArtistModel artist = (ArtistModel) mAdapter.getItem(position);
-
-                //Notify the activity to handle the clic event
-                mListener.onArtistSelectedListener(artist);
-
-                mPosition = position;
+                OnItemClick(position);
             }
         });
 
@@ -126,9 +131,13 @@ public class HomeFragment extends Fragment {
                     // Search for artist
                     if (Utilities.isOnline(getActivity())) {
                         mSearchText.clearFocus();
-                        new ArtistAsyncTask().execute(mSearchText.getQuery().toString());
+//                        new ArtistAsyncTask(getActivity(),HomeFragment.this).execute(mSearchText.getQuery().toString());
+
+                        //Find artists
+                        mPresenter.loadArtist(mSearchText.getQuery().toString());
+//                        findArtists(mSearchText.getQuery().toString());
                     } else
-                        L.toast(getActivity(), getResources().getString(R.string.no_internet));
+                        updateEmptyView(getString(R.string.no_internet));
 
                 }
                 return false;
@@ -137,9 +146,7 @@ public class HomeFragment extends Fragment {
             @Override
             public boolean onQueryTextChange(String s) {
                 if (s.isEmpty()) {
-                    mListOfArtist.clear();
-                    mAdapter.notifyDataSetChanged();
-                    mListener.onArtistSelectedListener(null);
+                    clearList();
                 }
                 return false;
             }
@@ -147,6 +154,50 @@ public class HomeFragment extends Fragment {
 
 
         return myView;
+    }
+
+    @Override
+    public ArrayList<IElement> getmListOfArtist() {
+        return mListOfArtist;
+    }
+
+    @Override
+    public void setmListOfArtist(ArrayList<IElement> mListOfArtist) {
+        this.mListOfArtist = mListOfArtist;
+    }
+
+    @Override
+    public void displayTracks(int position){
+        // Get the selected artist
+        ArtistModel artist = (ArtistModel) mAdapter.getItem(position);
+
+        //Notify the activity to handle the clic event
+        mListener.onArtistSelectedListener(artist);
+
+        mPosition = position;
+    }
+
+    @Override
+    public void displayArtists(ArrayList<IElement> artists) {
+        mAdapter=new ArtistAdapter(getActivity(), R.layout.artist_row_item, R.id.topTxt, artists);
+        mListView.setAdapter(mAdapter);
+    }
+
+    @Override
+    public void OnItemClick(int position) {
+        mPresenter.onClickItem(position);
+    }
+
+    @Override
+    public void clearList() {
+        if(mAdapter!=null){
+            mAdapter.clear();
+            mAdapter.notifyDataSetChanged();
+            mListener.onArtistSelectedListener(null);
+        }
+        else
+            updateEmptyView(getString(R.string.empty_spotify_list));
+
     }
 
 
@@ -166,19 +217,13 @@ public class HomeFragment extends Fragment {
 
             if (savedInstanceState.containsKey(LIST_TAG)) {
                 mListOfArtist= (ArrayList<IElement>) savedInstanceState.getSerializable(LIST_TAG);
+                displayArtists(mListOfArtist);
             }
         }
 
-        //Initialize the adapter
-        mAdapter = new ArtistAdapter(getActivity(), R.layout.artist_row_item, R.id.topTxt, mListOfArtist);
-
-
-        // Set the adapter
-        mListView.setAdapter(mAdapter);
-
         mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
-        updateEmptyView();
+        updateEmptyView(getString(R.string.empty_spotify_list));
 
         setRetainInstance(true);
     }
@@ -193,81 +238,19 @@ public class HomeFragment extends Fragment {
         super.onSaveInstanceState(outState);
     }
 
-    /**
-     * Artist asyncTask
-     */
-    private  class ArtistAsyncTask extends AsyncTask<String,Void,List<Artist>> {
+    @Override
+    public void updateEmptyView(String message){
+        emptyView.setText(message);
 
-        private SpotifyApi api = new SpotifyApi();
-        private SpotifyService spotify = api.getService();
-        private ProgressDialog mProgressDialog;
-
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            if(Utilities.isOnline(getActivity())) {
-                mProgressDialog = ProgressDialog.show(getActivity(), getResources().getString(R.string.progress_dialog_title), getResources().getString(R.string.progress_dialog_message));
-                mProgressDialog.show();
-            }else{
-                L.m(TAG,getResources().getString(R.string.no_internet));
-                // I dismiss the progress dialog
-                mProgressDialog.dismiss();
-                //L.toast(getActivity(),getResources().getString(R.string.no_internet));
-                updateEmptyView();
-            }
-        }
-
-
-        @Override
-        protected List<Artist> doInBackground(String... params) {
-
-            try {
-                String searchString = params[0];
-                return spotify.searchArtists(searchString).artists.items;
-            } catch(RetrofitError ex){
-                L.m(TAG, ex.getMessage());
-            }
-            return null;
-        }
-
-
-        @Override
-        protected void onPostExecute(List<Artist> artists) {
-            //I clear the list of artists
-            mAdapter.clear();
-            if(artists!=null && artists.size() > 0) {
-                for (Artist ar : artists) {
-                    ArtistModel artist = new ArtistModel();
-                    artist.setName(ar.name);
-                    artist.setSpotifyId(ar.id);
-                    if(ar.images.size()>0){
-                        artist.setArtThumb(ar.images.get(0).url);
-                    }
-                    mAdapter.add(artist);
-                }
-                if (mProgressDialog!=null && mProgressDialog.isShowing())
-                    mProgressDialog.dismiss();
-            }
-            else{
-                // I dismiss the progress dialog
-                if (mProgressDialog!=null && mProgressDialog.isShowing())
-                    mProgressDialog.dismiss();
-
-                // I notify the user no data has been found
-                L.toast(getActivity(),getResources().getString(R.string.no_artist));
-            }
-            updateEmptyView();
-        }
-    }
-
-
-    private void updateEmptyView(){
         if(!Utilities.isOnline(getActivity())){
             emptyView.setText(getString(R.string.no_internet));
         }
-        else
-            emptyView.setText(getString(R.string.empty_spotify_list));
+    }
+
+    @Override
+    public void findArtists(String artist) {
+        mTask=new ArtistAsyncTask(getActivity(),this);
+        mTask.execute(artist);
     }
 
     public interface OnArtistSelectedListener{

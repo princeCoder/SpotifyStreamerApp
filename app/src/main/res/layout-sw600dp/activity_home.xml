@@ -8,11 +8,16 @@
     <!--Static fragment for artist-->
     <fragment
         android:id="@+id/fragment_home"
-        android:name="com.princecoder.nanodegree.spotifytreamer.HomeFragment"
+        android:name="com.princecoder.nanodegree.spotifytreamer.view.HomeFragment"
         android:layout_width="0dp"
         android:layout_weight="1.5"
         android:layout_height="match_parent" />
 
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:layout_margin="5dp"
+        android:background="@android:color/darker_gray"/>
     <!--Here I will dynamically display fragments-->
     <FrameLayout
         android:id="@+id/trackContainer"

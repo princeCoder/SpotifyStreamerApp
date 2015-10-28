@@ -1,4 +1,4 @@
-package com.princecoder.nanodegree.spotifytreamer;
+package com.princecoder.nanodegree.spotifytreamer.view;
 
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -19,6 +19,8 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.princecoder.nanodegree.spotifytreamer.service.MediaPlayerService;
+import com.princecoder.nanodegree.spotifytreamer.R;
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.model.TrackModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
