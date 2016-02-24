@@ -53,7 +53,8 @@ public class TopTrackFragment extends Fragment implements ITrackView{
     //Associated artist
     private ArtistModel mArtist=new ArtistModel();
 
-    //Position
+    //Position of the last selected track
+    //We will need it to highlight that row element
     private int mPosition;
 
     //Position Tag
@@ -194,6 +195,7 @@ public class TopTrackFragment extends Fragment implements ITrackView{
                 // Let the activity do the job for us
                 // We have the list of tracks to play and the selected track by the user
                 mListener.onTrackSelectedListener(mAdapter.getElements(), position);
+
                 mPosition = position;
             }
         });

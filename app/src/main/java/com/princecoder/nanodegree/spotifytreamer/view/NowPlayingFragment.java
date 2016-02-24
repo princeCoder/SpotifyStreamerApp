@@ -307,7 +307,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
      */
     private void startSelectedTrack(){
         Intent intent=new Intent(getActivity(),MediaPlayerService.class);
-        intent.setAction(MediaPlayerService.MEDIASERVICE_START_START_SELECTED_TRACK);
+        intent.setAction(MediaPlayerService.MEDIASERVICE_START_SELECTED_TRACK);
         //Send an intent we're about to play the selected track
         getActivity().startService(intent);
     }
