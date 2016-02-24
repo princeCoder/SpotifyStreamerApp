@@ -16,10 +16,6 @@ import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
 import com.princecoder.nanodegree.spotifytreamer.utils.L;
-import com.princecoder.nanodegree.spotifytreamer.view.HomeActivity;
-import com.princecoder.nanodegree.spotifytreamer.view.NowPlayingFragment;
-import com.princecoder.nanodegree.spotifytreamer.view.SettingsActivity;
-import com.princecoder.nanodegree.spotifytreamer.view.TopTrackFragment;
 
 import java.util.ArrayList;
 
@@ -84,14 +80,14 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
         args.putSerializable(NowPlayingFragment.LIST_TRACKS, list);
         args.putInt(NowPlayingFragment.TRACK_INDEX, position);
 
+        //We save inside the model
         // Instantiate the nowPlaying fragment
         NowPlayingFragment fragment=new NowPlayingFragment();
         if(isOnline()){ // Make sure we start playing if we have internet
             fragment.setArguments(args);
-            fragment.show(getSupportFragmentManager(), "now playing");
-
             MediaModel model= MediaModel.getInstance();
             model.setNowPlayingTriggeredByUser(true);
+            fragment.show(getSupportFragmentManager(), "now playing");
         }
         else {
             L.toast(this,getResources().getString(R.string.no_internet));

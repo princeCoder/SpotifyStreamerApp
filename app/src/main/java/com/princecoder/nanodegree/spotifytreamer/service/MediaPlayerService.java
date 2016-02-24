@@ -81,7 +81,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     public static final String MEDIASERVICE_PLAYPAUSE="MEDIASERVICE_PLAYPAUSE";
     public static final String MEDIASERVICE_SEEK_TO="MEDIASERVICE_SEEK_TO";
-    public static final String MEDIASERVICE_START_START_SELECTED_TRACK="MEDIASERVICE_START_START_SELECTED_TRACK";
+    public static final String MEDIASERVICE_START_SELECTED_TRACK="MEDIASERVICE_START_START_SELECTED_TRACK";
     public static final String MEDIASERVICE_NEXT="MEDIASERVICE_NEXT";
     public static final String MEDIASERVICE_PREVIOUS="MEDIASERVICE_PREVIOUS";
     public static final String MEDIASERVICE_BACKWARD="MEDIASERVICE_BACKWARD";
@@ -231,7 +231,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             case MEDIASERVICE_SHUFFLE:
                 shuffle();
                 break;
-            case MEDIASERVICE_START_START_SELECTED_TRACK:
+            case MEDIASERVICE_START_SELECTED_TRACK:
                 playCurrent();
                 break;
             case MEDIASERVICE_SEEK_TO:
@@ -396,8 +396,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     // Play current track index
-    private boolean playCurrent() {
+    private synchronized boolean playCurrent() {
         try {
+
             if(mModel!=null){
                 if(mCurrentTrackIndex<mListTracks.size()){
                     mCurrentTrack=mListTracks.get(mCurrentTrackIndex);
