@@ -5,16 +5,16 @@ import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.princecoder.nanodegree.spotifytreamer.R;
-import com.princecoder.nanodegree.spotifytreamer.adapter.ArtistAdapter;
+import com.princecoder.nanodegree.spotifytreamer.adapter.RecyclerViewArtistAdapter;
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
 import com.princecoder.nanodegree.spotifytreamer.presenter.ArtistPresenter;
@@ -38,16 +38,16 @@ import java.util.ArrayList;
  */
 public class HomeFragment extends Fragment implements IHomeView {
 
-    // ListView to display artists
-    private ListView mListView;
-
-    private TextView emptyView;
+//    private TextView emptyView;
 
     // List of Artists
     private ArrayList<IElement> mListOfArtist=new ArrayList<>();
 
     // My adapter
-    private ArtistAdapter mAdapter;
+    private RecyclerViewArtistAdapter mAdapter;
+
+    // My recyclerView
+    private RecyclerView mRecyclerView;
 
     // Log field
     private final String TAG=getClass().getSimpleName();
@@ -101,21 +101,20 @@ public class HomeFragment extends Fragment implements IHomeView {
         // Inflate the layout for this fragment
         View myView= inflater.inflate(R.layout.fragment_home, container, false);
 
-        mListView = (ListView) myView.findViewById(R.id.artist_listview);
         mSearchText =(SearchView)myView.findViewById(R.id.searchText);
-        emptyView=(TextView)myView.findViewById(R.id.listview_spotify_empty);
-        mListView.setEmptyView(emptyView);
+//        emptyView=(TextView)myView.findViewById(R.id.listview_spotify_empty);
 
-        //Handle the click on the listView
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mRecyclerView=(RecyclerView)myView.findViewById(R.id.artist_recyclerview);
+        // Set the layout manager
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
+        mAdapter=new RecyclerViewArtistAdapter(getContext(), new RecyclerViewArtistAdapter.ViewHolderOnClickHandler() {
             @Override
-            public void onItemClick(AdapterView<?> arg0, View arg1, int position,
-                                    long id) {
-                // TODO Auto-generated method stub
-                OnItemClick(position);
+            public void onClick(int id, RecyclerViewArtistAdapter.ViewHolder vh) {
+                OnItemClick(id);
             }
         });
+        mRecyclerView.setAdapter(mAdapter);
 
         mSearchText = (SearchView) myView.findViewById(R.id.searchText);
 
@@ -131,11 +130,8 @@ public class HomeFragment extends Fragment implements IHomeView {
                     // Search for artist
                     if (Utilities.isOnline(getActivity())) {
                         mSearchText.clearFocus();
-//                        new ArtistAsyncTask(getActivity(),HomeFragment.this).execute(mSearchText.getQuery().toString());
-
                         //Find artists
                         mPresenter.loadArtist(mSearchText.getQuery().toString());
-//                        findArtists(mSearchText.getQuery().toString());
                     } else
                         updateEmptyView(getString(R.string.no_internet));
 
@@ -179,8 +175,7 @@ public class HomeFragment extends Fragment implements IHomeView {
 
     @Override
     public void displayArtists(ArrayList<IElement> artists) {
-        mAdapter=new ArtistAdapter(getActivity(), R.layout.artist_row_item, R.id.topTxt, artists);
-        mListView.setAdapter(mAdapter);
+        mAdapter.swapElements(artists);
     }
 
     @Override
@@ -191,8 +186,7 @@ public class HomeFragment extends Fragment implements IHomeView {
     @Override
     public void clearList() {
         if(mAdapter!=null){
-            mAdapter.clear();
-            mAdapter.notifyDataSetChanged();
+            mAdapter.swapElements(new ArrayList<IElement>());
             mListener.onArtistSelectedListener(null);
         }
         else
@@ -207,21 +201,11 @@ public class HomeFragment extends Fragment implements IHomeView {
         super.onActivityCreated(savedInstanceState);
 
         if (savedInstanceState!=null) {
-            if (savedInstanceState.containsKey(SELECTED_KEY)) {
-                mPosition = savedInstanceState.getInt(SELECTED_KEY);
-                if (mPosition != ListView.INVALID_POSITION) {
-                    mListView.smoothScrollToPosition(mPosition);
-                }
-
-            }
-
             if (savedInstanceState.containsKey(LIST_TAG)) {
                 mListOfArtist= (ArrayList<IElement>) savedInstanceState.getSerializable(LIST_TAG);
                 displayArtists(mListOfArtist);
             }
         }
-
-        mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
         updateEmptyView(getString(R.string.empty_spotify_list));
 
@@ -240,11 +224,11 @@ public class HomeFragment extends Fragment implements IHomeView {
 
     @Override
     public void updateEmptyView(String message){
-        emptyView.setText(message);
-
-        if(!Utilities.isOnline(getActivity())){
-            emptyView.setText(getString(R.string.no_internet));
-        }
+//        emptyView.setText(message);
+//
+//        if(!Utilities.isOnline(getActivity())){
+//            emptyView.setText(getString(R.string.no_internet));
+//        }
     }
 
     @Override
