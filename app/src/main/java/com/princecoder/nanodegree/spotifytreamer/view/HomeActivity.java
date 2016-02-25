@@ -92,8 +92,7 @@ public class HomeActivity extends ActionBarActivity implements HomeFragment.OnAr
                     TopTrackFragment fragment =(TopTrackFragment)getSupportFragmentManager().findFragmentByTag(TRACK_FRAGMENT_TAG);
                     if(artist==null){
                         if(fragment!=null){
-                            fragment.getAdapter().clear();
-                            fragment.getAdapter().notifyDataSetChanged();
+                            fragment.getAdapter().swapElements(new ArrayList<IElement>());
                         }
                     }
                     else{

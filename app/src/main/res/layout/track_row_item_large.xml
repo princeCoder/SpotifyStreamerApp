@@ -6,7 +6,7 @@
               android:minHeight="?android:attr/listPreferredItemHeight"
               android:background="@drawable/touch_selector"
               android:orientation="horizontal">
-    <ImageView
+    <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/thumb"
         android:background="@drawable/img"
         style="@style/standard_icon"

@@ -7,6 +7,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.ShareActionProvider;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -14,11 +16,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.princecoder.nanodegree.spotifytreamer.R;
-import com.princecoder.nanodegree.spotifytreamer.adapter.TrackAdapter;
+import com.princecoder.nanodegree.spotifytreamer.adapter.RecyclerViewTrackAdapter;
 import com.princecoder.nanodegree.spotifytreamer.model.ArtistModel;
 import com.princecoder.nanodegree.spotifytreamer.model.IElement;
 import com.princecoder.nanodegree.spotifytreamer.model.MediaModel;
@@ -38,11 +39,11 @@ public class TopTrackFragment extends Fragment implements ITrackView{
     //Log element
     public final String LOG_TAG =getClass().getSimpleName();
 
-    // The ListView
-    private ListView mTrackListView;
+    //RecyclerView element
+    RecyclerView mRecyclerView;
 
     // My adapter
-    private TrackAdapter mAdapter;
+    private RecyclerViewTrackAdapter mAdapter;
 
     //Tag
     private String TAG=getClass().getSimpleName();
@@ -187,18 +188,20 @@ public class TopTrackFragment extends Fragment implements ITrackView{
 
         View rootView=inflater.inflate(R.layout.fragment_top_track, container, false);
 
-        mTrackListView = (ListView) rootView.findViewById(R.id.track_listview);
+        mRecyclerView=(RecyclerView)rootView.findViewById(R.id.track_recyclerview);
 
-        mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        // Set the layout manager
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+        mAdapter=new RecyclerViewTrackAdapter(getContext(), new RecyclerViewTrackAdapter.ViewHolderOnClickHandler() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // Let the activity do the job for us
-                // We have the list of tracks to play and the selected track by the user
-                mListener.onTrackSelectedListener(mAdapter.getElements(), position);
-
-                mPosition = position;
+            public void onClick(int id, RecyclerViewTrackAdapter.ViewHolder vh) {
+                mListener.onTrackSelectedListener(mAdapter.getElements(), id);
+                mPosition = id;
             }
         });
+        mRecyclerView.setAdapter(mAdapter);
+
 
 
         if(savedInstanceState!=null){
@@ -212,12 +215,6 @@ public class TopTrackFragment extends Fragment implements ITrackView{
 
                 mListOfTracks=(ArrayList<IElement>) savedInstanceState.getSerializable(TRACKS);
                 displayTracks(mListOfTracks);
-            }
-            if(savedInstanceState.containsKey(SELECTED_TRACK)) {
-                mPosition=savedInstanceState.getInt(SELECTED_TRACK);
-                if (mPosition != ListView.INVALID_POSITION) {
-                    mTrackListView.smoothScrollToPosition(mPosition);
-                }
             }
 
             isCreated=false;
@@ -244,7 +241,7 @@ public class TopTrackFragment extends Fragment implements ITrackView{
 
     }
 
-    public TrackAdapter getAdapter(){
+    public RecyclerViewTrackAdapter getAdapter(){
         return mAdapter;
     }
 
@@ -298,8 +295,7 @@ public class TopTrackFragment extends Fragment implements ITrackView{
 
     @Override
     public void displayTracks(ArrayList<IElement> tracks) {
-        mAdapter = new TrackAdapter(getActivity(), R.layout.track_row_item, R.id.topTxt, tracks);
-        mTrackListView.setAdapter(mAdapter);
+        mAdapter.swapElements(tracks);
 
     }
 

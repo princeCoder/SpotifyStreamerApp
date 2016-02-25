@@ -10,18 +10,20 @@
     <FrameLayout android:layout_width="match_parent"
                  android:layout_height="match_parent"
                  android:layout_below="@+id/searchText">
-        <ListView
-            android:id="@+id/artist_listview"
-            style="@style/standard_listview"/>
+        <android.support.v7.widget.RecyclerView android:layout_width="match_parent"
+                                                android:layout_height="wrap_content"
+                                                android:id="@+id/artist_recyclerview">
 
-        <TextView android:layout_width="match_parent"
-                  android:layout_height="match_parent"
-                  android:id="@+id/listview_spotify_empty"
-                  android:text="@string/empty_spotify_list"
-                  android:gravity="center"
-                  android:layout_gravity="center_vertical"
-                  android:padding="16dp"
-            />
+        </android.support.v7.widget.RecyclerView>
+
+        <!--<TextView android:layout_width="match_parent"-->
+                  <!--android:layout_height="match_parent"-->
+                  <!--android:id="@+id/listview_spotify_empty"-->
+                  <!--android:text="@string/empty_spotify_list"-->
+                  <!--android:gravity="center"-->
+                  <!--android:layout_gravity="center_vertical"-->
+                  <!--android:padding="16dp"-->
+            <!--/>-->
 
     </FrameLayout>
 </RelativeLayout>
