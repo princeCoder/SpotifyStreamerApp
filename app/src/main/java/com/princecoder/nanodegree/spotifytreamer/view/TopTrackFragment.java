@@ -52,7 +52,7 @@ public class TopTrackFragment extends Fragment implements ITrackView{
     OnTrackSelectedListener mListener;
 
     //Associated artist
-    private ArtistModel mArtist=new ArtistModel();
+    private ArtistModel mArtist= new ArtistModel();
 
     //Position of the last selected track
     //We will need it to highlight that row element
@@ -115,17 +115,6 @@ public class TopTrackFragment extends Fragment implements ITrackView{
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_track, menu);
-
-        // Retrieve the share menu item
-
-        //This is to create a shareActionProvider
-        menuItem = menu.findItem(R.id.menu_item_share);
-
-        if(MediaModel.getInstance().getCurrentTrack()!=null){
-            mShareActionProvider = new ShareActionProvider(getActivity());
-            mShareActionProvider.setShareIntent(createShareSpotifyIntent());
-            MenuItemCompat.setActionProvider(menuItem, mShareActionProvider);
-        }
     }
 
 
@@ -143,16 +132,6 @@ public class TopTrackFragment extends Fragment implements ITrackView{
         return shareIntent;
     }
 
-    private void shareCurrentSongIntent() {
-
-        if(MediaModel.getInstance().getCurrentTrack()!=null){
-            startActivity(createShareSpotifyIntent());
-        }
-        else{
-            L.toast(getActivity(), "You have to play a song in order to share it");
-        }
-
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -173,10 +152,6 @@ public class TopTrackFragment extends Fragment implements ITrackView{
                 L.toast(getActivity(),getResources().getString(R.string.no_internet));
             }
             return true;
-        }
-        else if(item.getItemId()==R.id.menu_item_share) {
-
-            shareCurrentSongIntent();
         }
         return false;
     }
@@ -230,7 +205,7 @@ public class TopTrackFragment extends Fragment implements ITrackView{
         super.onSaveInstanceState(outState);
         //I save the current artist and his tracks
 
-        outState.putSerializable(SELECTED_ARTIST,mArtist);
+        outState.putParcelable(SELECTED_ARTIST,mArtist);
         if(mAdapter!=null)
         outState.putSerializable(TRACKS, mAdapter.getElements());
 
@@ -274,7 +249,7 @@ public class TopTrackFragment extends Fragment implements ITrackView{
     private void displayTracK(){
         Intent intent=getActivity().getIntent();
         if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) { // We are in single pane mode
-            ArtistModel artist = (ArtistModel)intent.getSerializableExtra(Intent.EXTRA_TEXT);
+            ArtistModel artist = (ArtistModel)intent.getParcelableExtra(Intent.EXTRA_TEXT);
             mPresenter.loadTracks(artist.getSpotifyId());
 
             L.m(LOG_TAG,"------------ We are in single pane mode -----------------");
@@ -284,7 +259,7 @@ public class TopTrackFragment extends Fragment implements ITrackView{
             L.m(LOG_TAG,"------------ We are in Dual pane mode -----------------");
             Bundle args=getArguments();
             if(args!=null){
-                mArtist = (ArtistModel)args.getSerializable(SELECTED_ARTIST);
+                mArtist = (ArtistModel)args.getParcelable(SELECTED_ARTIST);
                 mPresenter.loadTracks(mArtist.getSpotifyId());
             }
         }

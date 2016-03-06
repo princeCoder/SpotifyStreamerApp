@@ -1,11 +1,12 @@
 package com.princecoder.nanodegree.spotifytreamer.model;
 
-import java.io.Serializable;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * Created by prinzlyngotoum on 7/1/15.
  */
-public class TrackModel implements Serializable, IElement {
+public class TrackModel implements Parcelable, IElement {
 
     // Album name
     private String album;
@@ -26,7 +27,34 @@ public class TrackModel implements Serializable, IElement {
     // external spotify url
     private String externalUrl;
 
-    // Getters and Setters
+    public TrackModel(){
+        trackName=null;
+        albThumb=null;
+        artist=null;
+        prevUrl=null;
+        album=null;
+    }
+
+    protected TrackModel(Parcel in) {
+        album = in.readString();
+        trackName = in.readString();
+        albThumb = in.readString();
+        artist = in.readString();
+        prevUrl = in.readString();
+        externalUrl = in.readString();
+    }
+
+    public static final Creator<TrackModel> CREATOR = new Creator<TrackModel>() {
+        @Override
+        public TrackModel createFromParcel(Parcel in) {
+            return new TrackModel(in);
+        }
+
+        @Override
+        public TrackModel[] newArray(int size) {
+            return new TrackModel[size];
+        }
+    };
 
     public String getTrackName() {
         return trackName;
@@ -94,5 +122,21 @@ public class TrackModel implements Serializable, IElement {
     @Override
     public boolean hasThumb() {
         return (getThumb()!=null && !getThumb().isEmpty());
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+
+        parcel.writeString(album);
+        parcel.writeString(trackName);
+        parcel.writeString(albThumb);
+        parcel.writeString(artist);
+        parcel.writeString(prevUrl);
+        parcel.writeString(externalUrl);
     }
 }

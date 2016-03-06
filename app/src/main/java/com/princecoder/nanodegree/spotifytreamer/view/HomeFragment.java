@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.princecoder.nanodegree.spotifytreamer.R;
 import com.princecoder.nanodegree.spotifytreamer.adapter.RecyclerViewArtistAdapter;
@@ -38,7 +39,7 @@ import java.util.ArrayList;
  */
 public class HomeFragment extends Fragment implements IHomeView {
 
-//    private TextView emptyView;
+    private TextView emptyView;
 
     // List of Artists
     private ArrayList<IElement> mListOfArtist=new ArrayList<>();
@@ -102,7 +103,7 @@ public class HomeFragment extends Fragment implements IHomeView {
         View myView= inflater.inflate(R.layout.fragment_home, container, false);
 
         mSearchText =(SearchView)myView.findViewById(R.id.searchText);
-//        emptyView=(TextView)myView.findViewById(R.id.listview_spotify_empty);
+        emptyView=(TextView)myView.findViewById(R.id.listview_spotify_empty);
 
         mRecyclerView=(RecyclerView)myView.findViewById(R.id.artist_recyclerview);
         // Set the layout manager
@@ -114,7 +115,23 @@ public class HomeFragment extends Fragment implements IHomeView {
                 OnItemClick(id);
             }
         });
+
+        if(savedInstanceState!=null){
+            if(savedInstanceState.containsKey(SELECTED_KEY)){
+                mPosition = savedInstanceState.getInt(SELECTED_KEY);
+            }
+        }
+
+
+        if (mPosition != RecyclerView.NO_POSITION) {
+            // If we don't need to restart the loader, and there's a desired position to restore
+            // to, do so now.
+            mRecyclerView.smoothScrollToPosition(mPosition);
+            mAdapter.setSelectedItem(mPosition);
+        }
+
         mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setHasFixedSize(true);
 
         mSearchText = (SearchView) myView.findViewById(R.id.searchText);
 
@@ -132,8 +149,10 @@ public class HomeFragment extends Fragment implements IHomeView {
                         mSearchText.clearFocus();
                         //Find artists
                         mPresenter.loadArtist(mSearchText.getQuery().toString());
-                    } else
+                    } else{
                         updateEmptyView(getString(R.string.no_internet));
+                    }
+
 
                 }
                 return false;
@@ -175,11 +194,19 @@ public class HomeFragment extends Fragment implements IHomeView {
 
     @Override
     public void displayArtists(ArrayList<IElement> artists) {
+        if((artists!=null)&&artists.size()>0){
+            mRecyclerView.setVisibility(View.VISIBLE);
+            emptyView.setVisibility(View.GONE);
+        }
+        else{
+            updateEmptyView(getString(R.string.no_artist));
+        }
         mAdapter.swapElements(artists);
     }
 
     @Override
     public void OnItemClick(int position) {
+        mPosition = position;
         mPresenter.onClickItem(position);
     }
 
@@ -189,8 +216,8 @@ public class HomeFragment extends Fragment implements IHomeView {
             mAdapter.swapElements(new ArrayList<IElement>());
             mListener.onArtistSelectedListener(null);
         }
-        else
-            updateEmptyView(getString(R.string.empty_spotify_list));
+        updateEmptyView(getString(R.string.empty_spotify_list));
+
 
     }
 
@@ -224,11 +251,14 @@ public class HomeFragment extends Fragment implements IHomeView {
 
     @Override
     public void updateEmptyView(String message){
-//        emptyView.setText(message);
-//
-//        if(!Utilities.isOnline(getActivity())){
-//            emptyView.setText(getString(R.string.no_internet));
-//        }
+        emptyView.setText(message);
+
+        if(!Utilities.isOnline(getActivity())){
+            emptyView.setText(getString(R.string.no_internet));
+        }
+
+        mRecyclerView.setVisibility(View.GONE);
+        emptyView.setVisibility(View.VISIBLE);
     }
 
     @Override

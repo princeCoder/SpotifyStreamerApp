@@ -65,8 +65,6 @@ public class TrackActivity extends AppCompatActivity implements TopTrackFragment
     protected void onResume() {
         super.onResume();
         ArtistModel artist=(ArtistModel)getIntent().getSerializableExtra(Intent.EXTRA_TEXT);
-
-
         //Set the title of the actionBar
         getSupportActionBar().setTitle("Top tracks");
         if(artist!=null){

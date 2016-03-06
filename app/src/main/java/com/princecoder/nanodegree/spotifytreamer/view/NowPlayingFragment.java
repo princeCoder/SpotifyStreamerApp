@@ -97,7 +97,7 @@ public class NowPlayingFragment extends DialogFragment implements  SeekBar.OnSee
     private Utilities utils;
 
     //My Current Tracks
-    private TrackModel mCurrentTrack =new TrackModel();
+    private TrackModel mCurrentTrack = new TrackModel();
 
     //List of tracks
     private ArrayList<TrackModel>mListTracks=new ArrayList<>();

@@ -1,5 +1,6 @@
 package com.princecoder.nanodegree.spotifytreamer.service;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -59,7 +60,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private MediaModel mModel;
 
     //My Current Tracks
-    private TrackModel mCurrentTrack =new TrackModel();
+    private TrackModel mCurrentTrack = new TrackModel();
 
     private int mCurrentTrackIndex;
 
@@ -761,6 +762,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
 
         Notification.Builder mNotifyBuilder = new Notification.Builder(this);
+        mNotifyBuilder.setAutoCancel(true);
         Notification foregroundNote = mNotifyBuilder.setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setContentTitle(getResources().getString(R.string.app_name))
                 .setContentText(mModel.getCurrentTrack().getTrackName())
@@ -775,6 +777,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
 
 
+    @SuppressLint("ParcelCreator")
     public class RemoveControlWidget extends RemoteViews
     {
         private final Context mContext;
