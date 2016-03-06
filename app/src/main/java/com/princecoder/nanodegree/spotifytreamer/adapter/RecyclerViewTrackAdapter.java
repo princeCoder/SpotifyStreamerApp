@@ -147,6 +147,6 @@ public class RecyclerViewTrackAdapter extends RecyclerView.Adapter<RecyclerViewT
     }
 
     public interface ViewHolderOnClickHandler{
-        public void onClick(int id, ViewHolder vh);
+        void onClick(int id, ViewHolder vh);
     }
 }

@@ -30,6 +30,9 @@ public class RecyclerViewArtistAdapter extends RecyclerView.Adapter<RecyclerView
     ArrayList<IElement> mElements;
     final ViewHolderOnClickHandler mCallback;
 
+    //Current element selected
+    private int selectedItem=-1;
+
     public RecyclerViewArtistAdapter(Context c, ViewHolderOnClickHandler vh) {
         mContext = c;
         mCallback=vh;
@@ -40,6 +43,9 @@ public class RecyclerViewArtistAdapter extends RecyclerView.Adapter<RecyclerView
     public class ViewHolder extends RecyclerView.ViewHolder{
         public ImageView mPicture;
         public TextView mTopTxt;
+
+        //The row index
+        public int position;
 
         public ViewHolder(View view) {
             super(view);
@@ -70,7 +76,13 @@ public class RecyclerViewArtistAdapter extends RecyclerView.Adapter<RecyclerView
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    //Handle the click on an element
+                    if(selectedItem!=-1){
+                        notifyItemChanged(selectedItem);
+                    }
+                    setSelectedItem(vh.getAdapterPosition());
                     mCallback.onClick(vh.getAdapterPosition(), vh);
+                    notifyItemChanged(getSelectedItem());
                 }
             });
             return vh;
@@ -80,10 +92,26 @@ public class RecyclerViewArtistAdapter extends RecyclerView.Adapter<RecyclerView
         }
     }
 
+    /**
+     * Get the selected Item Index
+     * @return
+     */
+    public int getSelectedItem() {
+        return selectedItem;
+    }
+
+
+    public void setSelectedItem(int selectedItem) {
+        this.selectedItem = selectedItem;
+    }
+
+
+
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
 
         holder.mTopTxt.setText(mElements.get(position).getBaseInfo());
+        holder.position=position;
         if (mElements.get(position).hasThumb()){
             try {
                 Picasso.with(mContext)
@@ -91,6 +119,8 @@ public class RecyclerViewArtistAdapter extends RecyclerView.Adapter<RecyclerView
                         .resize(200, 200)
                         .centerCrop()
                         .into(holder.mPicture);
+
+                holder.itemView.setSelected(getSelectedItem() == position);
             } catch (Exception e) {
                 L.m(getClass().getSimpleName().toString(), mContext.getString(R.string.picasso_error) + ": " + e.getMessage());
             }
@@ -110,6 +140,6 @@ public class RecyclerViewArtistAdapter extends RecyclerView.Adapter<RecyclerView
     }
 
     public interface ViewHolderOnClickHandler{
-        public void onClick(int id, ViewHolder vh);
+        void onClick(int id, ViewHolder vh);
     }
 }

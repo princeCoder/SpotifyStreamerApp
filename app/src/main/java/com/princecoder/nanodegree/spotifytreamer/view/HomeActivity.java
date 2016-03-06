@@ -97,7 +97,8 @@ public class HomeActivity extends ActionBarActivity implements HomeFragment.OnAr
                     }
                     else{
                         Bundle args = new Bundle();
-                        args.putSerializable(TopTrackFragment.SELECTED_ARTIST,artist);
+//                        args.putSerializable(TopTrackFragment.SELECTED_ARTIST,artist);
+                        args.putParcelable(TopTrackFragment.SELECTED_ARTIST,artist);
 
                         // Create fragment and pass the selected artist as argument
                         fragment = new TopTrackFragment();

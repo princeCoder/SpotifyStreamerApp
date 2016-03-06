@@ -231,7 +231,16 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_marginRight="10dp"
-            android:src="@drawable/btn_repeat"
+            android:src="@drawable/btn_repeat"/>
+
+        <!-- Spotify Button -->
+        <ImageButton
+            android:id="@+id/btnSpotify"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/btn_spotify"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="10dp"
             android:background="@null"/>
     </LinearLayout>
 </RelativeLayout>

@@ -7,23 +7,21 @@
         style="@style/searchText"
         android:layout_alignParentTop="true"
         android:id="@+id/searchText"/>
-    <FrameLayout android:layout_width="match_parent"
-                 android:layout_height="match_parent"
-                 android:layout_below="@+id/searchText">
-        <android.support.v7.widget.RecyclerView android:layout_width="match_parent"
-                                                android:layout_height="wrap_content"
-                                                android:id="@+id/artist_recyclerview">
+    <android.support.v7.widget.RecyclerView android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:id="@+id/artist_recyclerview"
+                                            android:visibility="gone"
+                                            android:layout_below="@+id/searchText">
+    </android.support.v7.widget.RecyclerView>
 
-        </android.support.v7.widget.RecyclerView>
-
-        <!--<TextView android:layout_width="match_parent"-->
-                  <!--android:layout_height="match_parent"-->
-                  <!--android:id="@+id/listview_spotify_empty"-->
-                  <!--android:text="@string/empty_spotify_list"-->
-                  <!--android:gravity="center"-->
-                  <!--android:layout_gravity="center_vertical"-->
-                  <!--android:padding="16dp"-->
-            <!--/>-->
-
-    </FrameLayout>
+    <TextView android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:id="@+id/listview_spotify_empty"
+              android:text="@string/empty_spotify_list"
+              android:gravity="center"
+              android:layout_centerInParent="true"
+              android:visibility="visible"
+              android:textAppearance="?android:textAppearanceLarge"
+              android:layout_gravity="center_vertical"
+              android:padding="16dp"/>
 </RelativeLayout>
