@@ -1,5 +1,6 @@
 # SpotifyStreamerApp
-### Stream  songs using the Spotify API
+### Media player app streaming songs using Spotify API.
+#### This App is compatible with Android phones and tablets
 
 This project is based on a MVP architecture.
 
@@ -8,6 +9,10 @@ This project is based on a MVP architecture.
 
 - Service: To handle the media player in background. I handle the queue of message inside the service using a HandlerThread.
   The service sends message back to the activity via broadcast receivers.
+
+- BroadCast receivers: I used them inside the service to broadcast informations inside my fragments.
+
+- Pending intents: I used them for broadcast messages with broadcast receivers and also notifications
 
 - I get artist and artist track using the Spotify API which returns me data via JSON format that I parse inside an Asynctask class using retrofit.
 
